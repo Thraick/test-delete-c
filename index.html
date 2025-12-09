@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Crypto Tracker</title>
+<title>Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
   body {font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px;}
   h1 {text-align:center;margin:0 0 8px;}
@@ -33,15 +34,21 @@
   input.amt {padding:10px;width:140px;border-radius:6px;border:1px solid #30363d;background:#161b22;color:white;}
   .loading {text-align:center;padding:60px;color:#8b949e;}
   .footer {text-align:center;margin:40px 0 20px;color:#8b949e;font-size:14px;}
+  .star {color:#8b949e;cursor:pointer;margin-right:8px;}
+  .star.active {color:#e3b341;}
+  .top-bar {display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
 
-<div style="text-align:center;margin-bottom:20px;">
-  <button class="btn refresh" onclick="refreshData(true)">Refresh Prices</button>
+<div class="top-bar">
+  <input type="text" id="search" placeholder="Search coin..." onkeyup="render()" style="padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:white;width:150px;">
+  <button class="btn refresh" onclick="manualRefresh()">Refresh Prices</button>
+  <button class="btn" id="btnFav" style="background:#30363d;color:#8b949e;" onclick="toggleFavFilter()"><i class="fas fa-star"></i> Only</button>
   <button class="btn manage" onclick="togglePanel('managePanel')">Manage Coins</button>
   <button class="btn columns" onclick="togglePanel('colPanel')">Columns</button>
-  <span id="last" style="margin-left:20px;color:#8b949e;"></span>
+  <button class="btn" style="background:#555;" onclick="togglePanel('settingsPanel')"><i class="fas fa-cog"></i> Settings</button>
+  <span id="last" style="color:#8b949e;font-size:14px;"></span>
 </div>
 
 <!-- Manage Coins Panel -->
@@ -68,6 +75,29 @@
   <button class="btn" style="background:#da3633;width:100%;margin-top:10px;" onclick="togglePanel('colPanel')">Close</button>
 </div>
 
+<!-- Settings Panel -->
+<div class="panel" id="settingsPanel">
+  <h3>Settings</h3>
+  
+  <strong>General</strong>
+  <label>Average Period (Days): <input type="number" id="setAvgDays" value="35" min="1"></label>
+  <label>Auto-Refresh Favorites (min): <input type="number" id="setRefreshMin" value="60" min="1"></label>
+  
+  <strong>Notifications (Avg Drop)</strong>
+  <label><input type="checkbox" id="setNotifEnabled"> Enable Notifications</label>
+  <label>Threshold (% below Avg): <input type="number" id="setNotifThreshold" value="-40" step="1"></label>
+  
+  <strong>Data Management</strong>
+  <button class="btn" style="background:#1f6feb;width:100%;margin-top:10px;" onclick="exportData()">Export Data/Settings</button>
+  <div style="margin-top:10px;">
+    <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+    <button class="btn" style="background:#238636;width:100%;" onclick="document.getElementById('importFile').click()">Import Data</button>
+  </div>
+
+  <button class="btn" style="background:#238636;width:100%;margin-top:20px;" onclick="saveSettings()">Save Settings</button>
+  <button class="btn" style="background:#da3633;width:100%;margin-top:10px;" onclick="togglePanel('settingsPanel')">Close</button>
+</div>
+
 <table id="table">
   <thead id="thead">
     <tr>
@@ -90,11 +120,14 @@
 
 <script>
 const { DateTime } = luxon;
-let data = {}, positions = {}, myCoins = [];
-let sortCol = 1;     // Default: sort by Changes
-let asc = false;     // false = descending (best for Changes)
+let data = {}, positions = {}, myCoins = [], favorites = [];
+let sortCol = 2; // Default: sort by Changes (fixed index)
+let asc = false;
+let showFavOnly = false;
 let visibleCols = {changes:true,'24h':true,'7d':true,'30d':true,price:true,avg:true,high:true,low:true,profit:true};
-const CACHE = "crypto_fixed_v10";
+let settings = { avgDays: 35, refreshMin: 60, notifEnabled: false, notifThreshold: -40 };
+let refreshTimer = null;
+const CACHE = "crypto_tracker_v11";
 
 const DEFAULT_COINS = [
   "FISUSDT", "1MBABYDOGEUSDT", "BTCUSDT", "ETHUSDT", "USDTUSDT", "XRPUSDT", "BNBUSDT", "SOLUSDT",
@@ -107,12 +140,60 @@ const DEFAULT_COINS = [
   "FTTUSDT", "SYRUPUSDT", "NMRUSDT", "PEPEUSDT", "HEMIUSDT", "VOXELUSDT", "ALLOUSDT", "SXPUSDT",
   "RAYUSDT", "MAGICUSDT", "SOMIUSDT", "SNXUSDT", "REZUSDT", "ZECUSDT", "BONKUSDT", "GLMUSDT",
   "FLUXUSDT", "STORJUSDT", "FETUSDT", "BTTCUSDT", "MINAUSDT", "DASHUSDT", "ZKUSDT", "VIRTUALUSDT",
-  "MORPHOUSDT"
+  "MORPHOUSDT", "KITEUSDT", "RESOLVUSDT", "SUPERUSDT", "TURTLEUSDT", "ENAUSDT", "PARTIUSDT", "MDTUSDT",
+  "RDNTUSDT", "WOOUSDT", "ASTERUSDT", "DGBUSDT", "METUSDT", "BANKUSDT", "ATUSDT", "AUDIOUSDT",
+  "BMTUSDT", "STOUSDT", "BANANAS31USDT", "TRONUSDT", "HYPEUSDT", "CAKEUSDT", "XMLUSDT", "STRKUSDT",
+  "PIUSDT", "TRUMPUSDT", "PUMPUSDT", "WLDUSDT", "ABUSDT", "TELUSDT", "OBKUSDT", "QNTUSDT",
+  "CATUSDT", "FELISUSDT", "BASEUSDT", "ACIUSDT", "PIPPINUSDT", "DOYRUSDT", "BPXUSDT", "FUSDT",
+  "GROKUSDT", "ALTUSDT", "AIUSDT", "WALUSDT", "MIRAUSDT", "ZKCUSDT", "DUSKUSDT", "NOMUSDT",
+  "ACHUSDT", "ANIMEUSDT", "RIFUSDT", "HUMAUSDT", "XECUSDT", "CHRUSDT", "XPLUSDT", "LINEAUSDT",
+  "1000STATSUSDT", "HMSTRUSDT", "HOMEUSDT", "MMTUSDT", "EPICUSDT", "COWUSDT", "WUSDT", "TWTUSDT",
+  "ONDOUSDT", "FARTCOINUSDT", "PONDUSDT", "ZENUSDT", "RANTUSDT", "FFUSDT", "GLMRUSDT", "WINUSDT",
+  "PENGUUSDT", "POLUSDT",
+  
+  // Additional Layer 1 & Layer 2 protocols
+  "APTUSDT", "SEIUSDT", "ALGOUSDT", "HBARUSDT", "XTZUSDT", "EOSUSDT", "FLOWUSDT", "NEARUSDT",
+  "MINAUSDT", "CELOUSDT", "ONEUSDT", "IOTXUSDT", "ROSEUSDT", "KLAYUSDT", "COREUSDT",
+  
+  // DeFi tokens
+  "CRVUSDT", "COMPUSDT", "AAVEUSDT", "MKRUSDT", "SNXUSDT", "UNIUSDT", "SUSHIUSDT", "CAKEUSDT",
+  "1INCHUSDT", "BALUSDT", "YFIUSDT", "CVXUSDT", "FXSUSDT", "LDOUSDT", "GMXUSDT", "RDNTUSDT",
+  
+  // Gaming & Metaverse
+  "MANAUSDT", "SANDUSDT", "AXSUSDT", "GALAUSDT", "ENJUSDT", "TLMUSDT", "YGGUSDT", "ILVUSDT",
+  "MAGICUSDT", "PIXELUSDT", "BEAMUSDT",
+  
+  // AI & Big Data
+  "AGIXUSDT", "OCEANUSDT", "FETUSDT", "NMRUSDT", "GRTUSDT", "BANDUSDT", "TRBUSDT",
+  
+  // Meme coins
+  "DOGEUSDT", "SHIBUSDT", "PEPEUSDT", "FLOKIUSDT", "BONKUSDT", "WIFUSDT", "MEMEUSDT", "TURBOUSDT",
+  
+  // Real World Assets (RWA)
+  "ONDOUSDT", "POLYXUSDT", "TRUUSDT", "CFGUSDT",
+  
+  // Privacy coins
+  "XMRUSDT", "ZECUSDT", "DASHUSDT", "SCRTUSDT",
+  
+  // Oracles
+  "LINKUSDT", "TRBUSDT", "API3USDT", "PYTHUSDT", "BANDUSDT",
+  
+  // Storage & Computing
+  "FILUSDT", "ARUSDT", "STORJUSDT", "SCUSDT", "ANKRUSDT",
+  
+  // Exchange tokens
+  "BNBUSDT", "FTTUSDT", "LEOUSDT", "CROUSDT", "OKBUSDT", "HTUSDT", "KCSUSDT", "GTUSDT",
+  
+  // Stablecoins (besides USDT/USDC)
+  "DAIUSDT", "BUSDUSDT", "TUSDUSDT", "USDPUSDT", "GUSDUSDT",
+  
+  // New & Trending
+  "JTOUSDT", "JUPUSDT", "PYTHUSDT", "WENUSDT", "ZEUSUSDT", "MYROUSDT", "POPCATUSDT", "MOODENGUSDT"
 ];
 
 function save() {
-  localStorage.setItem(CACHE, JSON.stringify({data, positions, myCoins, visibleCols}));
-  document.getElementById("last").textContent = "Updated " + DateTime.now().toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
+  localStorage.setItem(CACHE, JSON.stringify({data, positions, myCoins, favorites, visibleCols, settings}));
+  if (data) document.getElementById("last").textContent = "Updated " + DateTime.now().toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
 }
 
 function load() {
@@ -122,13 +203,23 @@ function load() {
     data = tmp.data || {};
     positions = tmp.positions || {};
     myCoins = tmp.myCoins || DEFAULT_COINS;
+    favorites = (tmp.favorites || []).filter(s => s.endsWith("USDT"));
     visibleCols = tmp.visibleCols || visibleCols;
+    settings = {...settings, ...tmp.settings};
   } else {
     myCoins = [...DEFAULT_COINS];
     save();
   }
   updateColVisibility();
   renderCoinList();
+  
+  // Apply settings to UI
+  document.getElementById("setAvgDays").value = settings.avgDays;
+  document.getElementById("setRefreshMin").value = settings.refreshMin;
+  document.getElementById("setNotifEnabled").checked = settings.notifEnabled;
+  document.getElementById("setNotifThreshold").value = settings.notifThreshold;
+  
+  startTimer();
 }
 
 function formatPrice(p) {
@@ -138,6 +229,8 @@ function formatPrice(p) {
   return "$" + p.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 async function getTickers() {
   const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
   const arr = await res.json();
@@ -145,7 +238,8 @@ async function getTickers() {
 }
 
 async function getKlines(sym) {
-  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=35`);
+  const days = settings.avgDays || 35;
+  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=${days}`);
   const k = await res.json();
   const closes = k.map(x => parseFloat(x[4]));
   const highs = k.map(x => parseFloat(x[2]));
@@ -168,32 +262,165 @@ async function getKlines(sym) {
 }
 
 async function refreshData(force = false) {
-  document.getElementById("body").innerHTML = '<tr><td colspan="10" class="loading">Updating...</td></tr>';
-  if (!force) load();
-  const tickers = await getTickers();
-  for (const sym of myCoins) {
-    if (force || !data[sym]) {
-      try {
-        const k = await getKlines(sym);
-        const t = tickers[sym] || {};
-        data[sym] = {
-          sym: sym.replace("USDT", ""),
-          price: parseFloat(t.lastPrice || k.price),
-          change24h: parseFloat(t.priceChangePercent || k.change24h),
-          change7d: k.change7d,
-          change30d: k.change30d,
-          avgPrice: k.avgPrice,
-          avgHigh: k.avgHigh,
-          avgLow: k.avgLow,
-          vsAvg: k.vsAvg
-        };
-      } catch (e) {
-        console.error("Error fetching " + sym, e);
-      }
+  // If Auto-Refresh (force=false), only update FAVORITES
+  // If Manual (force=true), update ALL
+  const targetCoins = (!force && favorites.length > 0) ? favorites : myCoins;
+  
+  const lastEl = document.getElementById("last");
+  
+  if (force) {
+    document.getElementById("body").innerHTML = '<tr><td colspan="10" class="loading">Updating... 0%</td></tr>';
+  } else {
+    // Visual feedback for auto-refresh
+    console.log("Auto-refreshing favorites...", targetCoins);
+    if (lastEl) {
+       lastEl.textContent = "Auto-refreshing...";
+       lastEl.style.color = "#e3b341";
     }
   }
+  
+  try {
+    const tickers = await getTickers();
+    let count = 0;
+    const total = targetCoins.length;
+    
+    for (const sym of targetCoins) {
+      count++;
+      if (force) {
+         let pct = Math.round((count / total) * 100);
+         const loadEl = document.querySelector(".loading");
+         if (loadEl) loadEl.textContent = `Updating... ${pct}% (${count}/${total})`;
+      }
+
+      await sleep(200); // Prevent rate limiting
+      if (force || !data[sym] || favorites.includes(sym)) {
+        try {
+          const k = await getKlines(sym);
+          const t = tickers[sym] || {};
+          data[sym] = {
+            sym: sym.replace("USDT", ""),
+            fullSym: sym,
+            price: parseFloat(t.lastPrice || k.price),
+            change24h: parseFloat(t.priceChangePercent || k.change24h),
+            change7d: k.change7d,
+            change30d: k.change30d,
+            avgPrice: k.avgPrice,
+            avgHigh: k.avgHigh,
+            avgLow: k.avgLow,
+            vsAvg: k.vsAvg
+          };
+        } catch (e) {
+          console.error("Error fetching " + sym, e);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error getting tickers", err);
+  }
+
+  save();
+  // Restore color
+  if (lastEl) lastEl.style.color = "#8b949e";
+  
+  render();
+  // Check alerts after auto-refresh
+  if (!force) checkAlerts();
+}
+
+function manualRefresh() { refreshData(true); }
+
+function startTimer() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  const min = parseInt(settings.refreshMin) || 60;
+  refreshTimer = setInterval(() => refreshData(false), min * 60000);
+}
+
+function toggleStar(sym) {
+  if (favorites.includes(sym)) favorites = favorites.filter(x => x !== sym);
+  else favorites.push(sym);
   save();
   render();
+}
+
+function toggleFavFilter() {
+  showFavOnly = !showFavOnly;
+  const btn = document.getElementById("btnFav");
+  if (showFavOnly) {
+    btn.style.background = "#e3b341";
+    btn.style.color = "#161b22";
+  } else {
+    btn.style.background = "#30363d";
+    btn.style.color = "#8b949e";
+  }
+  render();
+}
+
+function saveSettings() {
+  const avg = parseInt(document.getElementById("setAvgDays").value) || 35;
+  const ref = parseInt(document.getElementById("setRefreshMin").value) || 60;
+  const notif = document.getElementById("setNotifEnabled").checked;
+  const thres = parseInt(document.getElementById("setNotifThreshold").value) || -40;
+  
+  const needRefresh = (avg !== settings.avgDays); // Re-fetch if avg period changed
+  
+  settings = { avgDays: avg, refreshMin: ref, notifEnabled: notif, notifThreshold: thres };
+  save();
+  startTimer();
+  
+  // Request Notification Permission if enabled
+  if (notif && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+  
+  alert("Settings Saved!");
+  togglePanel('settingsPanel');
+  if (needRefresh) refreshData(true);
+}
+
+function checkAlerts() {
+  if (!settings.notifEnabled) return;
+  if (Notification.permission !== "granted") return;
+  
+  const thres = settings.notifThreshold;
+  const coinsToCheck = favorites.length > 0 ? favorites : myCoins; // Only alert for refreshed coins
+  
+  coinsToCheck.forEach(sym => {
+    const c = data[sym];
+    if (c && c.vsAvg <= thres) {
+      new Notification(`Crypto Alert: ${c.sym}`, {
+        body: `${c.sym} is ${c.vsAvg.toFixed(2)}% below average (Limit: ${thres}%)`,
+        icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.png"
+      });
+    }
+  });
+}
+
+function exportData() {
+  const blob = new Blob([localStorage.getItem(CACHE)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "crypto_tracker_backup.json";
+  a.click();
+}
+
+function importData(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const json = JSON.parse(e.target.result);
+      if (json.data && json.myCoins) {
+        localStorage.setItem(CACHE, JSON.stringify(json));
+        alert("Import Successful! Reloading...");
+        location.reload();
+      } else {
+        alert("Invalid file format");
+      }
+    } catch(err) {
+      alert("Error parsing file");
+    }
+  };
+  reader.readAsText(input.files[0]);
 }
 
 function calcProfit(sym) {
@@ -208,7 +435,13 @@ function calcProfit(sym) {
 
 function render() {
   const tbody = document.getElementById("body");
-  let rows = myCoins.map(s => data[s]).filter(Boolean);
+  const search = document.getElementById("search").value.toUpperCase();
+  
+  let rows = myCoins
+    .filter(s => s.includes(search))
+    .filter(s => !showFavOnly || favorites.includes(s))
+    .map(s => data[s])
+    .filter(Boolean);
 
   // RELIABLE SORTING – FIXED
   const colKeys = ["sym","vsAvg","change24h","change7d","change30d","price","avgPrice","avgHigh","avgLow"];
@@ -234,6 +467,7 @@ function render() {
 
   tbody.innerHTML = rows.map(c => {
     const sym = c.sym;
+    const fullSym = c.fullSym || (sym + "USDT");
     const display = sym === "1MBABYDOGE" ? "1M BabyDoge" : sym;
     const vs = c.vsAvg.toFixed(2);
     const prof = calcProfit(sym);
@@ -242,8 +476,11 @@ function render() {
       : `<span class="zero">$0.00</span>`;
 
     return `
-      <tr style="cursor:pointer;" onclick="if(event.target.classList.contains('symbol')){event.stopPropagation();window.open('https://www.binance.com/en/trade/${sym}_USDT?type=spot','_blank');}else{openRow(this);}">
-        <td><span class="symbol">${display}</span></td>
+      <tr style="cursor:pointer;" onclick="if(event.target.classList.contains('symbol') || event.target.classList.contains('star')){event.stopPropagation();}else{openRow(this);}">
+        <td>
+           <i class="fas fa-star star ${favorites.includes(fullSym) ? 'active' : ''}" onclick="toggleStar('${fullSym}')"></i>
+           <span class="symbol" onclick="window.open('https://www.binance.com/en/trade/${fullSym}?type=spot','_blank')">${display}</span>
+        </td>
         <td class="${c.vsAvg >= 0 ? 'pos' : 'neg'}">${c.vsAvg >= 0 ? '+' : ''}${vs}%</td>
         <td class="${c.change24h >= 0 ? 'pos' : 'neg'}">${c.change24h.toFixed(2)}%</td>
         <td class="${c.change7d >= 0 ? 'pos' : 'neg'}">${c.change7d.toFixed(2)}%</td>
@@ -256,13 +493,25 @@ function render() {
       </tr>
       <tr class="details" id="det-${sym}"><td colspan="10" style="padding:0;">
         <div style="padding:20px;background:#0d1117;">
-          <strong>Buy / Sell ${display}</strong><br><br>
-          Current price: <b>${formatPrice(c.price)}</b><br><br>
-          USDT amount: <input type="number" class="amt" id="in-${sym}" value="1000" min="1" step="0.01">
-          <button class="buy-btn" onclick="buy('${sym}');event.stopPropagation();">BUY</button>
-          <button class="sell-btn" onclick="sell('${sym}');event.stopPropagation();">SELL ALL</button>
-          <div style="margin-top:15px;font-size:18px;" id="msg-${sym}"></div>
-          <button class="btn" style="background:#da3633;width:100%;margin-top:10px;" onclick="closeAll();">Close</button>
+          <strong>Manage Position: ${display}</strong><br><br>
+          <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;max-width:350px;">
+            <label>Purchase Price:</label>
+            <input type="number" class="amt" id="price-${sym}" value="${positions[sym]?.buyPrice || c.price}" step="any" style="width:100%">
+            
+            <label>USDT:</label>
+            <input type="number" class="amt" id="usdt-${sym}" placeholder="Calc Amount..." value="${positions[sym] ? (positions[sym].coins * positions[sym].buyPrice).toFixed(2) : ''}" oninput="calcAmount('${sym}')" step="any" style="width:100%">
+            
+            <label>Crypto:</label>
+            <input type="number" class="amt" id="amt-${sym}" value="${positions[sym]?.coins || ''}" step="any" style="width:100%">
+          </div>
+          
+          <div style="margin:15px 0;font-size:16px;" id="msg-${sym}">
+             ${positions[sym] ? "Profit: " + profitHTML : ""}
+          </div>
+
+          <button class="buy-btn" onclick="savePosition('${sym}');event.stopPropagation();">SAVE</button>
+          <button class="sell-btn" onclick="sell('${sym}');event.stopPropagation();">SELL</button>
+          <button class="btn" style="background:#da3633;margin-top:10px;" onclick="closeAll();">Close</button>
         </div>
       </td></tr>`;
   }).join("");
@@ -281,29 +530,34 @@ function closeAll() {
   document.querySelectorAll(".details").forEach(r => r.style.display = "none");
 }
 
-function buy(sym) {
-  const coin = data[sym + "USDT"] || Object.values(data).find(c => c.sym === sym);
-  const usdt = parseFloat(document.getElementById(`in-${sym}`).value) || 0;
-  if (usdt <= 0) return alert("Enter amount > 0");
-  const coins = usdt / coin.price;
-  positions[sym] = {coins, buyPrice: coin.price};
+function calcAmount(sym) {
+  const price = parseFloat(document.getElementById(`price-${sym}`).value) || 0;
+  const usdt = parseFloat(document.getElementById(`usdt-${sym}`).value) || 0;
+  if (price > 0 && usdt > 0) {
+    document.getElementById(`amt-${sym}`).value = (usdt / price);
+  }
+}
+
+function savePosition(sym) {
+  const price = parseFloat(document.getElementById(`price-${sym}`).value);
+  const coins = parseFloat(document.getElementById(`amt-${sym}`).value);
+
+  if (!price || !coins || price <= 0 || coins <= 0) {
+    return alert("Please enter valid Price and Amount");
+  }
+
+  positions[sym] = {coins, buyPrice: price};
   save();
-  document.getElementById(`msg-${sym}`).innerHTML = `<span style="color:#26a641">Bought ${coins.toFixed(6)} ${sym} @ ${formatPrice(coin.price)}</span>`;
+  document.getElementById(`msg-${sym}`).innerHTML = `<span style="color:#26a641">Saved: ${coins} ${sym} @ $${price}</span>`;
   render();
 }
 
 function sell(sym) {
-  if (!positions[sym] || positions[sym].coins === 0) {
-    document.getElementById(`msg-${sym}`).textContent = "Nothing to sell";
-    return;
+  if (positions[sym]) {
+    delete positions[sym];
+    save();
+    render();
   }
-  const coin = data[sym + "USDT"] || Object.values(data).find(c => c.sym === sym);
-  const profit = (coin.price - positions[sym].buyPrice) * positions[sym].coins;
-  const pct = ((coin.price - positions[sym].buyPrice) / positions[sym].buyPrice) * 100;
-  document.getElementById(`msg-${sym}`).innerHTML = `<span style="color:${profit >= 0 ? '#26a641' : '#da3633'}">Sold → Profit: $${profit.toFixed(2)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)</span>`;
-  delete positions[sym];
-  save();
-  render();
 }
 
 function sort(n) {
@@ -361,10 +615,11 @@ function renderCoinList() {
 }
 
 function togglePanel(id) {
-  document.querySelectorAll(".panel").forEach(p => p.style.display = "none");
   const panel = document.getElementById(id);
-  panel.style.display = (panel.style.display === "block") ? "none" : "block";
-  if (id === "managePanel") renderCoinList();
+  const isBlock = panel.style.display === "block";
+  document.querySelectorAll(".panel").forEach(p => p.style.display = "none");
+  panel.style.display = isBlock ? "none" : "block";
+  if (id === "managePanel" && panel.style.display === "block") renderCoinList();
 }
 
 document.addEventListener('change', e => {
