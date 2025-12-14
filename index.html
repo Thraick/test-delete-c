@@ -7,8 +7,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
   body {font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px;}
-  h1 {text-align:center;margin:0 0 8px;}
-  .sub {text-align:center;color:#8b949e;margin-bottom:20px;}
   .btn {padding:10px 20px;border:none;border-radius:8px;color:white;cursor:pointer;margin:0 5px;}
   .refresh {background:#238636;} .refresh:hover {background:#2ea44f;}
   .manage {background:#6f42c1;} .manage:hover {background:#8250df;}
@@ -20,7 +18,7 @@
   .remove {background:#da3633;color:white;padding:6px 12px;border:none;border-radius:6px;cursor:pointer;font-size:12px;}
   table {width:100%;border-collapse:collapse;background:#161b22;border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5);}
   th, td {padding:14px;text-align:right;border-bottom:1px solid #30363d;}
-  th {background:#21262d;cursor:pointer;user-select:none;position:relative;}
+  th {background:#21262d;cursor:pointer;user-select:none;}
   th:hover {background:#30363d;}
   th:first-child, td:first-child {text-align:left;}
   .symbol {color:#58a6ff;font-weight:bold;cursor:pointer;}
@@ -33,14 +31,12 @@
   .sell-btn {background:#da3633;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;}
   input.amt {padding:10px;width:140px;border-radius:6px;border:1px solid #30363d;background:#161b22;color:white;}
   .loading {text-align:center;padding:60px;color:#8b949e;}
-  .footer {text-align:center;margin:40px 0 20px;color:#8b949e;font-size:14px;}
   .star {color:#8b949e;cursor:pointer;margin-right:8px;}
   .star.active {color:#e3b341;}
   .top-bar {display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
-
 <div class="top-bar">
   <input type="text" id="search" placeholder="Search coin..." onkeyup="render()" style="padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:white;width:150px;">
   <button class="btn refresh" onclick="manualRefresh()">Refresh Prices</button>
@@ -64,6 +60,7 @@
 <div class="panel" id="colPanel">
   <h4>Show / Hide Columns</h4>
   <label><input type="checkbox" checked data-col="changes"> Changes</label><br>
+  <label><input type="checkbox" checked data-col="volchange"> Vol Change</label><br>
   <label><input type="checkbox" checked data-col="24h"> 24h %</label><br>
   <label><input type="checkbox" checked data-col="7d"> 7d %</label><br>
   <label><input type="checkbox" checked data-col="30d"> 30d %</label><br>
@@ -71,6 +68,7 @@
   <label><input type="checkbox" checked data-col="avg"> Avg Price</label><br>
   <label><input type="checkbox" checked data-col="high"> Avg High</label><br>
   <label><input type="checkbox" checked data-col="low"> Avg Low</label><br>
+  <label><input type="checkbox" checked data-col="volume"> 24h Volume</label><br>
   <label><input type="checkbox" checked data-col="profit"> Profit</label><br>
   <button class="btn" style="background:#da3633;width:100%;margin-top:10px;" onclick="togglePanel('colPanel')">Close</button>
 </div>
@@ -78,57 +76,54 @@
 <!-- Settings Panel -->
 <div class="panel" id="settingsPanel">
   <h3>Settings</h3>
-  
-  <strong>General</strong>
-  <label>Average Period (Days): <input type="number" id="setAvgDays" value="35" min="1"></label>
-  <label>Auto-Refresh Favorites (min): <input type="number" id="setRefreshMin" value="60" min="1"></label>
-  
-  <strong>Notifications (Avg Drop)</strong>
-  <label><input type="checkbox" id="setNotifEnabled"> Enable Notifications</label>
-  <label>Threshold (% below Avg): <input type="number" id="setNotifThreshold" value="-40" step="1"></label>
-  
-  <strong>Data Management</strong>
+  <strong>General</strong><br>
+  <label>Average Period (Days): <input type="number" id="setAvgDays" value="35" min="1"></label><br>
+  <label>Auto-Refresh Favorites (min): <input type="number" id="setRefreshMin" value="60" min="1"></label><br><br>
+  <strong>Notifications (Avg Drop)</strong><br>
+  <label><input type="checkbox" id="setNotifEnabled"> Enable Notifications</label><br>
+  <label>Threshold (% below Avg): <input type="number" id="setNotifThreshold" value="-40" step="1"></label><br><br>
+  <strong>Data Management</strong><br>
   <button class="btn" style="background:#1f6feb;width:100%;margin-top:10px;" onclick="exportData()">Export Data/Settings</button>
   <div style="margin-top:10px;">
     <input type="file" id="importFile" style="display:none" onchange="importData(this)">
     <button class="btn" style="background:#238636;width:100%;" onclick="document.getElementById('importFile').click()">Import Data</button>
   </div>
-
   <button class="btn" style="background:#238636;width:100%;margin-top:20px;" onclick="saveSettings()">Save Settings</button>
   <button class="btn" style="background:#da3633;width:100%;margin-top:10px;" onclick="togglePanel('settingsPanel')">Close</button>
 </div>
 
 <table id="table">
-  <thead id="thead">
+  <thead>
     <tr>
       <th onclick="sort(0)">Crypto</th>
       <th onclick="sort(1)">Changes</th>
-      <th onclick="sort(2)">24h %</th>
-      <th onclick="sort(3)">7d %</th>
-      <th onclick="sort(4)">30d %</th>
-      <th onclick="sort(5)">Price</th>
-      <th onclick="sort(6)">Avg Price</th>
-      <th onclick="sort(7)">Avg High</th>
-      <th onclick="sort(8)">Avg Low</th>
+      <th onclick="sort(2)">Vol Change</th>
+      <th onclick="sort(3)">24h %</th>
+      <th onclick="sort(4)">7d %</th>
+      <th onclick="sort(5)">30d %</th>
+      <th onclick="sort(6)">Price</th>
+      <th onclick="sort(7)">Avg Price</th>
+      <th onclick="sort(8)">Avg High</th>
+      <th onclick="sort(9)">Avg Low</th>
+      <th onclick="sort(10)">24h Volume</th>
       <th>Profit</th>
     </tr>
   </thead>
   <tbody id="body">
-    <tr><td colspan="10" class="loading">Loading...</td></tr>
+    <tr><td colspan="12" class="loading">Loading...</td></tr>
   </tbody>
 </table>
 
 <script>
 const { DateTime } = luxon;
 let data = {}, positions = {}, myCoins = [], favorites = [];
-let sortCol = 2; // Default: sort by Changes (fixed index)
+let sortCol = 1; // Default: Changes (descending)
 let asc = false;
 let showFavOnly = false;
-let visibleCols = {changes:true,'24h':true,'7d':true,'30d':true,price:true,avg:true,high:true,low:true,profit:true};
+let visibleCols = {changes:true, volchange:true, '24h':true, '7d':true, '30d':true, price:true, avg:true, high:true, low:true, volume:true, profit:true};
 let settings = { avgDays: 35, refreshMin: 60, notifEnabled: false, notifThreshold: -40 };
 let refreshTimer = null;
-const CACHE = "crypto_tracker_v11";
-
+const CACHE = "crypto_tracker_v13";
 const DEFAULT_COINS = [
   "FISUSDT", "1MBABYDOGEUSDT", "BTCUSDT", "ETHUSDT", "USDTUSDT", "XRPUSDT", "BNBUSDT", "SOLUSDT",
   "USDCUSDT", "TRXUSDT", "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "SHIBUSDT", "LINKUSDT", "DOTUSDT",
@@ -150,53 +145,27 @@ const DEFAULT_COINS = [
   "1000STATSUSDT", "HMSTRUSDT", "HOMEUSDT", "MMTUSDT", "EPICUSDT", "COWUSDT", "WUSDT", "TWTUSDT",
   "ONDOUSDT", "FARTCOINUSDT", "PONDUSDT", "ZENUSDT", "RANTUSDT", "FFUSDT", "GLMRUSDT", "WINUSDT",
   "PENGUUSDT", "POLUSDT",
-  
-  // Additional Layer 1 & Layer 2 protocols
   "APTUSDT", "SEIUSDT", "ALGOUSDT", "XTZUSDT", "EOSUSDT", "FLOWUSDT", "CELOUSDT", "ONEUSDT",
   "IOTXUSDT", "ROSEUSDT", "KLAYUSDT", "COREUSDT",
-  
-  // DeFi tokens
   "CRVUSDT", "COMPUSDT", "SUSHIUSDT", "1INCHUSDT", "BALUSDT", "YFIUSDT", "CVXUSDT", "FXSUSDT",
   "GMXUSDT",
-  
-  // Gaming & Metaverse
   "MANAUSDT", "SANDUSDT", "AXSUSDT", "GALAUSDT", "ENJUSDT", "TLMUSDT", "YGGUSDT", "ILVUSDT",
   "PIXELUSDT", "BEAMUSDT",
-  
-  // AI & Big Data
   "AGIXUSDT", "OCEANUSDT", "BANDUSDT", "TRBUSDT",
-  
-  // Meme coins
   "MEMEUSDT", "TURBOUSDT",
-  
-  // Real World Assets (RWA)
   "POLYXUSDT", "TRUUSDT", "CFGUSDT",
-  
-  // Privacy coins
   "XMRUSDT", "SCRTUSDT",
-  
-  // Oracles
   "API3USDT", "PYTHUSDT",
-  
-  // Storage & Computing
   "ARUSDT", "SCUSDT", "ANKRUSDT",
-  
-  // Exchange tokens
   "LEOUSDT", "CROUSDT", "OKBUSDT", "HTUSDT", "KCSUSDT", "GTUSDT",
-  
-  // Stablecoins (besides USDT/USDC)
   "DAIUSDT", "BUSDUSDT", "TUSDUSDT", "USDPUSDT", "GUSDUSDT",
-  
-  // New & Trending
   "JTOUSDT", "WENUSDT", "ZEUSUSDT", "MYROUSDT", "POPCATUSDT", "MOODENGUSDT"
 ];
 
-
 function save() {
   localStorage.setItem(CACHE, JSON.stringify({data, positions, myCoins, favorites, visibleCols, settings}));
-  if (data) document.getElementById("last").textContent = "Updated " + DateTime.now().toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
+  document.getElementById("last").textContent = "Updated " + DateTime.now().toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS);
 }
-
 function load() {
   const s = localStorage.getItem(CACHE);
   if (s) {
@@ -205,7 +174,7 @@ function load() {
     positions = tmp.positions || {};
     myCoins = tmp.myCoins || DEFAULT_COINS;
     favorites = (tmp.favorites || []).filter(s => s.endsWith("USDT"));
-    visibleCols = tmp.visibleCols || visibleCols;
+    visibleCols = {...visibleCols, ...tmp.visibleCols};
     settings = {...settings, ...tmp.settings};
   } else {
     myCoins = [...DEFAULT_COINS];
@@ -213,23 +182,26 @@ function load() {
   }
   updateColVisibility();
   renderCoinList();
-  
-  // Apply settings to UI
   document.getElementById("setAvgDays").value = settings.avgDays;
   document.getElementById("setRefreshMin").value = settings.refreshMin;
   document.getElementById("setNotifEnabled").checked = settings.notifEnabled;
   document.getElementById("setNotifThreshold").value = settings.notifThreshold;
-  
   startTimer();
 }
-
 function formatPrice(p) {
   if (p < 0.000001) return "$" + p.toExponential(4);
   if (p < 0.01) return "$" + p.toFixed(8).replace(/\.?0+$/, '');
   if (p < 1) return "$" + p.toFixed(6).replace(/\.?0+$/, '');
   return "$" + p.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
 }
-
+function formatVolume(v) {
+  if (!v || v === 0) return "$0";
+  if (v >= 1e12) return "$" + (v / 1e12).toFixed(2) + "T";
+  if (v >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+  if (v >= 1e6) return "$" + (v / 1e6).toFixed(2) + "M";
+  if (v >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+  return "$" + v.toFixed(0);
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function getTickers() {
@@ -237,67 +209,66 @@ async function getTickers() {
   const arr = await res.json();
   return Object.fromEntries(arr.map(t => [t.symbol, t]));
 }
-
 async function getKlines(sym) {
   const days = settings.avgDays || 35;
-  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=${days}`);
+  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=${days + 1}`);
   const k = await res.json();
   const closes = k.map(x => parseFloat(x[4]));
   const highs = k.map(x => parseFloat(x[2]));
   const lows = k.map(x => parseFloat(x[3]));
+  const quoteVolumes = k.map(x => parseFloat(x[7]));
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+
+  const pastVolumes = quoteVolumes.slice(0, -1);
+  const avgVolume = pastVolumes.length > 0 ? pastVolumes.reduce((a, b) => a + b, 0) / pastVolumes.length : 0;
+
   const cur = closes[closes.length - 1];
   const past24 = closes[closes.length - 2] || cur;
   const past7 = closes[closes.length - 8] || cur;
   const past30 = closes[0] || cur;
+
   return {
     price: cur,
     avgPrice: avg(closes),
     avgHigh: avg(highs),
     avgLow: avg(lows),
+    avgVolume: avgVolume,
     change24h: (cur - past24) / past24 * 100,
     change7d: (cur - past7) / past7 * 100,
     change30d: (cur - past30) / past30 * 100,
     vsAvg: (cur - avg(closes)) / avg(closes) * 100
   };
 }
-
 async function refreshData(force = false) {
-  // If Auto-Refresh (force=false), only update FAVORITES
-  // If Manual (force=true), update ALL
   const targetCoins = (!force && favorites.length > 0) ? favorites : myCoins;
-  
   const lastEl = document.getElementById("last");
-  
+
   if (force) {
-    document.getElementById("body").innerHTML = '<tr><td colspan="10" class="loading">Updating... 0%</td></tr>';
+    document.getElementById("body").innerHTML = '<tr><td colspan="12" class="loading">Updating... 0%</td></tr>';
   } else {
-    // Visual feedback for auto-refresh
-    console.log("Auto-refreshing favorites...", targetCoins);
-    if (lastEl) {
-       lastEl.textContent = "Auto-refreshing...";
-       lastEl.style.color = "#e3b341";
-    }
+    lastEl.textContent = "Auto-refreshing...";
+    lastEl.style.color = "#e3b341";
   }
-  
+
   try {
     const tickers = await getTickers();
     let count = 0;
     const total = targetCoins.length;
-    
+
     for (const sym of targetCoins) {
       count++;
       if (force) {
-         let pct = Math.round((count / total) * 100);
-         const loadEl = document.querySelector(".loading");
-         if (loadEl) loadEl.textContent = `Updating... ${pct}% (${count}/${total})`;
+        const pct = Math.round((count / total) * 100);
+        const loadEl = document.querySelector(".loading");
+        if (loadEl) loadEl.textContent = `Updating... ${pct}% (${count}/${total})`;
       }
-
-      await sleep(200); // Prevent rate limiting
+      await sleep(200);
       if (force || !data[sym] || favorites.includes(sym)) {
         try {
           const k = await getKlines(sym);
           const t = tickers[sym] || {};
+          const currentVolume = parseFloat(t.quoteVolume || 0);
+          const volChange = k.avgVolume > 0 ? (currentVolume - k.avgVolume) / k.avgVolume * 100 : 0;
           data[sym] = {
             sym: sym.replace("USDT", ""),
             fullSym: sym,
@@ -308,6 +279,8 @@ async function refreshData(force = false) {
             avgPrice: k.avgPrice,
             avgHigh: k.avgHigh,
             avgLow: k.avgLow,
+            volume24h: currentVolume,
+            volChange: volChange,
             vsAvg: k.vsAvg
           };
         } catch (e) {
@@ -318,74 +291,48 @@ async function refreshData(force = false) {
   } catch (err) {
     console.error("Error getting tickers", err);
   }
-
   save();
-  // Restore color
-  if (lastEl) lastEl.style.color = "#8b949e";
-  
+  lastEl.style.color = "#8b949e";
   render();
-  // Check alerts after auto-refresh
   if (!force) checkAlerts();
 }
-
 function manualRefresh() { refreshData(true); }
-
 function startTimer() {
   if (refreshTimer) clearInterval(refreshTimer);
   const min = parseInt(settings.refreshMin) || 60;
   refreshTimer = setInterval(() => refreshData(false), min * 60000);
 }
-
 function toggleStar(sym) {
   if (favorites.includes(sym)) favorites = favorites.filter(x => x !== sym);
   else favorites.push(sym);
   save();
   render();
 }
-
 function toggleFavFilter() {
   showFavOnly = !showFavOnly;
   const btn = document.getElementById("btnFav");
-  if (showFavOnly) {
-    btn.style.background = "#e3b341";
-    btn.style.color = "#161b22";
-  } else {
-    btn.style.background = "#30363d";
-    btn.style.color = "#8b949e";
-  }
+  btn.style.background = showFavOnly ? "#e3b341" : "#30363d";
+  btn.style.color = showFavOnly ? "#161b22" : "#8b949e";
   render();
 }
-
 function saveSettings() {
   const avg = parseInt(document.getElementById("setAvgDays").value) || 35;
   const ref = parseInt(document.getElementById("setRefreshMin").value) || 60;
   const notif = document.getElementById("setNotifEnabled").checked;
   const thres = parseInt(document.getElementById("setNotifThreshold").value) || -40;
-  
-  const needRefresh = (avg !== settings.avgDays); // Re-fetch if avg period changed
-  
+  const needRefresh = avg !== settings.avgDays;
   settings = { avgDays: avg, refreshMin: ref, notifEnabled: notif, notifThreshold: thres };
   save();
   startTimer();
-  
-  // Request Notification Permission if enabled
-  if (notif && Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-  
+  if (notif && Notification.permission !== "granted") Notification.requestPermission();
   alert("Settings Saved!");
   togglePanel('settingsPanel');
   if (needRefresh) refreshData(true);
 }
-
 function checkAlerts() {
-  if (!settings.notifEnabled) return;
-  if (Notification.permission !== "granted") return;
-  
+  if (!settings.notifEnabled || Notification.permission !== "granted") return;
   const thres = settings.notifThreshold;
-  const coinsToCheck = favorites.length > 0 ? favorites : myCoins; // Only alert for refreshed coins
-  
-  coinsToCheck.forEach(sym => {
+  (favorites.length > 0 ? favorites : myCoins).forEach(sym => {
     const c = data[sym];
     if (c && c.vsAvg <= thres) {
       new Notification(`Crypto Alert: ${c.sym}`, {
@@ -395,7 +342,6 @@ function checkAlerts() {
     }
   });
 }
-
 function exportData() {
   const blob = new Blob([localStorage.getItem(CACHE)], {type: "application/json"});
   const a = document.createElement("a");
@@ -403,7 +349,6 @@ function exportData() {
   a.download = "crypto_tracker_backup.json";
   a.click();
 }
-
 function importData(input) {
   if (!input.files || !input.files[0]) return;
   const reader = new FileReader();
@@ -414,16 +359,11 @@ function importData(input) {
         localStorage.setItem(CACHE, JSON.stringify(json));
         alert("Import Successful! Reloading...");
         location.reload();
-      } else {
-        alert("Invalid file format");
-      }
-    } catch(err) {
-      alert("Error parsing file");
-    }
+      } else alert("Invalid file format");
+    } catch(err) { alert("Error parsing file"); }
   };
   reader.readAsText(input.files[0]);
 }
-
 function calcProfit(sym) {
   const coin = data[sym + "USDT"] || Object.values(data).find(c => c.sym === sym);
   if (!coin) return {profit: 0, pct: 0};
@@ -433,33 +373,24 @@ function calcProfit(sym) {
   const pct = (coin.price - pos.buyPrice) / pos.buyPrice * 100;
   return {profit, pct};
 }
-
 function render() {
   const tbody = document.getElementById("body");
   const search = document.getElementById("search").value.toUpperCase();
-  
   let rows = myCoins
     .filter(s => s.includes(search))
     .filter(s => !showFavOnly || favorites.includes(s))
     .map(s => data[s])
     .filter(Boolean);
 
-  // RELIABLE SORTING – FIXED
-  const colKeys = ["sym","vsAvg","change24h","change7d","change30d","price","avgPrice","avgHigh","avgLow"];
-
+  const colKeys = ["sym","vsAvg","volChange","change24h","change7d","change30d","price","avgPrice","avgHigh","avgLow","volume24h"];
   rows.sort((a, b) => {
-    if (sortCol === 0) {
-      const A = a.sym.toLowerCase();
-      const B = b.sym.toLowerCase();
-      return asc ? A.localeCompare(B) : B.localeCompare(A);
-    }
+    if (sortCol === 0) return asc ? a.sym.localeCompare(b.sym) : b.sym.localeCompare(a.sym);
     const key = colKeys[sortCol];
     const A = parseFloat(a[key]) || 0;
     const B = parseFloat(b[key]) || 0;
     return asc ? (A - B) : (B - A);
   });
 
-  // Update sort arrows
   document.querySelectorAll("th[onclick]").forEach((th, i) => {
     const text = th.getAttribute("data-text") || th.innerText.trim();
     if (!th.getAttribute("data-text")) th.setAttribute("data-text", text);
@@ -471,6 +402,7 @@ function render() {
     const fullSym = c.fullSym || (sym + "USDT");
     const display = sym === "1MBABYDOGE" ? "1M BabyDoge" : sym;
     const vs = c.vsAvg.toFixed(2);
+    const volCh = c.volChange.toFixed(2);
     const prof = calcProfit(sym);
     const profitHTML = prof.profit !== 0
       ? `<span class="${prof.profit >= 0 ? 'pos' : 'neg'}">$${prof.profit.toFixed(2)} <small>(${prof.pct >= 0 ? '+' : ''}${prof.pct.toFixed(2)}%)</small></span>`
@@ -479,10 +411,11 @@ function render() {
     return `
       <tr style="cursor:pointer;" onclick="if(event.target.classList.contains('symbol') || event.target.classList.contains('star')){event.stopPropagation();}else{openRow(this);}">
         <td>
-           <i class="fas fa-star star ${favorites.includes(fullSym) ? 'active' : ''}" onclick="toggleStar('${fullSym}')"></i>
-           <span class="symbol" onclick="window.open('https://www.binance.com/en/trade/${fullSym}?type=spot','_blank')">${display}</span>
+          <i class="fas fa-star star ${favorites.includes(fullSym) ? 'active' : ''}" onclick="toggleStar('${fullSym}')"></i>
+          <span class="symbol" onclick="window.open('https://www.binance.com/en/trade/${fullSym}?type=spot','_blank')">${display}</span>
         </td>
         <td class="${c.vsAvg >= 0 ? 'pos' : 'neg'}">${c.vsAvg >= 0 ? '+' : ''}${vs}%</td>
+        <td class="${c.volChange >= 0 ? 'pos' : 'neg'}">${c.volChange >= 0 ? '+' : ''}${volCh}%</td>
         <td class="${c.change24h >= 0 ? 'pos' : 'neg'}">${c.change24h.toFixed(2)}%</td>
         <td class="${c.change7d >= 0 ? 'pos' : 'neg'}">${c.change7d.toFixed(2)}%</td>
         <td class="${c.change30d >= 0 ? 'pos' : 'neg'}">${c.change30d.toFixed(2)}%</td>
@@ -490,26 +423,21 @@ function render() {
         <td>${formatPrice(c.avgPrice)}</td>
         <td>${formatPrice(c.avgHigh)}</td>
         <td>${formatPrice(c.avgLow)}</td>
+        <td>${formatVolume(c.volume24h)}</td>
         <td>${profitHTML}</td>
       </tr>
-      <tr class="details" id="det-${sym}"><td colspan="10" style="padding:0;">
+      <tr class="details" id="det-${sym}"><td colspan="12" style="padding:0;">
         <div style="padding:20px;background:#0d1117;">
           <strong>Manage Position: ${display}</strong><br><br>
           <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;max-width:350px;">
             <label>Purchase Price:</label>
-            <input type="number" class="amt" id="price-${sym}" value="${positions[sym]?.buyPrice || c.price}" step="any" style="width:100%">
-            
+            <input type="number" class="amt" id="price-${sym}" value="${positions[sym]?.buyPrice || c.price}" step="any">
             <label>USDT:</label>
-            <input type="number" class="amt" id="usdt-${sym}" placeholder="Calc Amount..." value="${positions[sym] ? (positions[sym].coins * positions[sym].buyPrice).toFixed(2) : ''}" oninput="calcAmount('${sym}')" step="any" style="width:100%">
-            
+            <input type="number" class="amt" id="usdt-${sym}" placeholder="Calc Amount..." value="${positions[sym] ? (positions[sym].coins * positions[sym].buyPrice).toFixed(2) : ''}" oninput="calcAmount('${sym}')" step="any">
             <label>Crypto:</label>
-            <input type="number" class="amt" id="amt-${sym}" value="${positions[sym]?.coins || ''}" step="any" style="width:100%">
+            <input type="number" class="amt" id="amt-${sym}" value="${positions[sym]?.coins || ''}" step="any">
           </div>
-          
-          <div style="margin:15px 0;font-size:16px;" id="msg-${sym}">
-             ${positions[sym] ? "Profit: " + profitHTML : ""}
-          </div>
-
+          <div style="margin:15px 0;font-size:16px;" id="msg-${sym}">${positions[sym] ? "Profit: " + profitHTML : ""}</div>
           <button class="buy-btn" onclick="savePosition('${sym}');event.stopPropagation();">SAVE</button>
           <button class="sell-btn" onclick="sell('${sym}');event.stopPropagation();">SELL</button>
           <button class="btn" style="background:#da3633;margin-top:10px;" onclick="closeAll();">Close</button>
@@ -520,39 +448,28 @@ function render() {
   updateColVisibility();
   closeAll();
 }
-
 function openRow(tr) {
   closeAll();
   const next = tr.nextElementSibling;
   if (next && next.classList.contains("details")) next.style.display = "table-row";
 }
-
 function closeAll() {
   document.querySelectorAll(".details").forEach(r => r.style.display = "none");
 }
-
 function calcAmount(sym) {
   const price = parseFloat(document.getElementById(`price-${sym}`).value) || 0;
   const usdt = parseFloat(document.getElementById(`usdt-${sym}`).value) || 0;
-  if (price > 0 && usdt > 0) {
-    document.getElementById(`amt-${sym}`).value = (usdt / price);
-  }
+  if (price > 0 && usdt > 0) document.getElementById(`amt-${sym}`).value = (usdt / price).toFixed(8);
 }
-
 function savePosition(sym) {
   const price = parseFloat(document.getElementById(`price-${sym}`).value);
   const coins = parseFloat(document.getElementById(`amt-${sym}`).value);
-
-  if (!price || !coins || price <= 0 || coins <= 0) {
-    return alert("Please enter valid Price and Amount");
-  }
-
+  if (!price || !coins || price <= 0 || coins <= 0) return alert("Please enter valid Price and Amount");
   positions[sym] = {coins, buyPrice: price};
   save();
   document.getElementById(`msg-${sym}`).innerHTML = `<span style="color:#26a641">Saved: ${coins} ${sym} @ $${price}</span>`;
   render();
 }
-
 function sell(sym) {
   if (positions[sym]) {
     delete positions[sym];
@@ -560,18 +477,16 @@ function sell(sym) {
     render();
   }
 }
-
 function sort(n) {
   if (sortCol === n) asc = !asc;
-  else { sortCol = n; asc = (n === 1) ? false : true; }  // Changes defaults to descending
+  else { sortCol = n; asc = (n === 1) ? false : true; }
   render();
 }
-
 function updateColVisibility() {
-  const colMap = {changes:1, '24h':2, '7d':3, '30d':4, price:5, avg:6, high:7, low:8};
+  const colMap = {changes:1, volchange:2, '24h':3, '7d':4, '30d':5, price:6, avg:7, high:8, low:9, volume:10};
   Object.keys(visibleCols).forEach(key => {
     const idx = colMap[key];
-    if (idx) {
+    if (idx !== undefined) {
       const th = document.querySelectorAll("th")[idx];
       const cells = document.querySelectorAll(`td:nth-child(${idx + 1})`);
       const display = visibleCols[key] ? '' : 'none';
@@ -579,27 +494,23 @@ function updateColVisibility() {
       cells.forEach(td => td.style.display = display);
     }
   });
-  // Profit column
   const profitTh = document.querySelector('th:last-of-type');
   const profitCells = document.querySelectorAll('tbody td:last-child');
   const profitDisplay = visibleCols.profit ? '' : 'none';
   if (profitTh) profitTh.style.display = profitDisplay;
   profitCells.forEach(td => td.style.display = profitDisplay);
 }
-
 function addCoin() {
-  const input = document.getElementById("newSymbol");
-  let sym = input.value.trim().toUpperCase();
+  let sym = document.getElementById("newSymbol").value.trim().toUpperCase();
   if (!sym.endsWith("USDT")) sym += "USDT";
   if (myCoins.includes(sym)) return alert("Already added!");
   if (!sym || sym.length < 5) return alert("Enter valid symbol");
   myCoins.push(sym);
-  input.value = "";
+  document.getElementById("newSymbol").value = "";
   save();
   refreshData(true);
   renderCoinList();
 }
-
 function removeCoin(sym) {
   myCoins = myCoins.filter(x => x !== sym);
   delete data[sym];
@@ -608,13 +519,11 @@ function removeCoin(sym) {
   render();
   renderCoinList();
 }
-
 function renderCoinList() {
   document.getElementById("coinList").innerHTML = myCoins.map(s =>
     `<div class="coin-item"><span>${s}</span><button class="remove" onclick="removeCoin('${s}')">Remove</button></div>`
   ).join("");
 }
-
 function togglePanel(id) {
   const panel = document.getElementById(id);
   const isBlock = panel.style.display === "block";
@@ -622,7 +531,6 @@ function togglePanel(id) {
   panel.style.display = isBlock ? "none" : "block";
   if (id === "managePanel" && panel.style.display === "block") renderCoinList();
 }
-
 document.addEventListener('change', e => {
   if (e.target.type === 'checkbox' && e.target.dataset.col) {
     visibleCols[e.target.dataset.col] = e.target.checked;
@@ -630,7 +538,6 @@ document.addEventListener('change', e => {
     updateColVisibility();
   }
 });
-
 window.onload = () => {
   load();
   if (myCoins.length === 0) refreshData(true);
