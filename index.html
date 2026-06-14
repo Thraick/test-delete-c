@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoTrack</title>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <style>
       * {
@@ -11,24 +12,28 @@
         padding: 0;
       }
       body {
-        font-family: system-ui, sans-serif;
-        background: #0d1117;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0b0e11;
         color: #e6edf3;
         min-height: 100vh;
+        line-height: 1.4;
       }
       :root {
         --green: #26a641;
         --red: #da3633;
         --blue: #388bfd;
-        --purple: #8250df;
         --gold: #e3b341;
-        --border: #30363d;
-        --surface: #161b22;
-        --surface2: #21262d;
-        --dim: #8b949e;
+        --border: #2d333b;
+        --surface: #12171d;
+        --surface2: #1a2028;
+        --dim: #768390;
+        --accent: #539bf5;
       }
 
-      /* Layout */
       .app {
         display: flex;
         flex-direction: column;
@@ -39,102 +44,132 @@
         align-items: center;
         gap: 8px;
         padding: 10px 16px;
-        background: #161b22;
+        background: var(--surface);
         border-bottom: 1px solid var(--border);
         flex-wrap: wrap;
         position: sticky;
         top: 0;
         z-index: 100;
+        min-height: 48px;
       }
-      .topbar h1 {
-        font-size: 16px;
+      .topbar .logo {
+        display: flex;
+        align-items: center;
+        gap: 7px;
         font-weight: 700;
-        color: #58a6ff;
-        margin-right: 4px;
+        font-size: 15px;
+        color: #fff;
         white-space: nowrap;
+        margin-right: 4px;
+      }
+      .topbar .logo svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--accent);
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
       .spacer {
         flex: 1;
       }
-      .status {
-        font-size: 12px;
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        display: inline-block;
+        margin-right: 4px;
+      }
+      .status-text {
+        font-size: 11px;
         color: var(--dim);
         white-space: nowrap;
       }
-      .content {
-        flex: 1;
-        overflow: auto;
-        padding: 12px;
-      }
 
-      /* Buttons */
       .btn {
         display: inline-flex;
         align-items: center;
         gap: 5px;
         padding: 6px 12px;
-        border: none;
+        border: 1px solid var(--border);
         border-radius: 6px;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 500;
         cursor: pointer;
-        transition:
-          opacity 0.15s,
-          transform 0.1s;
+        transition: all 0.15s;
         white-space: nowrap;
+        background: var(--surface2);
+        color: #e6edf3;
+        font-family: inherit;
       }
       .btn:hover {
-        opacity: 0.85;
+        border-color: #539bf5;
+        background: #1c2530;
       }
       .btn:active {
         transform: scale(0.97);
       }
-      .btn-green {
-        background: var(--green);
+      .btn-accent {
+        background: #1f6feb;
+        border-color: #1f6feb;
         color: #fff;
+      }
+      .btn-accent:hover {
+        background: #388bfd;
+        border-color: #388bfd;
+      }
+      .btn-green {
+        background: #1a7f37;
+        border-color: #1a7f37;
+        color: #fff;
+      }
+      .btn-green:hover {
+        background: #26a641;
+        border-color: #26a641;
       }
       .btn-red {
-        background: var(--red);
+        background: #b62324;
+        border-color: #b62324;
         color: #fff;
       }
-      .btn-blue {
-        background: var(--blue);
-        color: #fff;
-      }
-      .btn-purple {
-        background: var(--purple);
-        color: #fff;
-      }
-      .btn-gray {
-        background: #30363d;
-        color: #e6edf3;
+      .btn-red:hover {
+        background: #da3633;
+        border-color: #da3633;
       }
       .btn-gold {
-        background: var(--gold);
-        color: #161b22;
+        background: #9e6a03;
+        border-color: #9e6a03;
+        color: #fff;
+      }
+      .btn-gold:hover {
+        background: #e3b341;
+        border-color: #e3b341;
+        color: #0b0e11;
       }
       .btn-sm {
         padding: 4px 8px;
-        font-size: 12px;
-        border-radius: 5px;
+        font-size: 11px;
+        border-radius: 4px;
       }
       .btn-icon {
-        padding: 6px;
+        padding: 6px 7px;
         border-radius: 6px;
         background: transparent;
         border: 1px solid var(--border);
+        cursor: pointer;
         color: #e6edf3;
         display: inline-flex;
         align-items: center;
-        cursor: pointer;
-        transition: background 0.15s;
       }
       .btn-icon:hover {
         background: var(--surface2);
+        border-color: #539bf5;
       }
       .btn-icon svg {
-        width: 16px;
-        height: 16px;
+        width: 15px;
+        height: 15px;
         stroke: currentColor;
         fill: none;
         stroke-width: 2;
@@ -142,7 +177,6 @@
         stroke-linejoin: round;
       }
 
-      /* Search */
       .search-wrap {
         position: relative;
         display: flex;
@@ -151,8 +185,8 @@
       .search-wrap svg {
         position: absolute;
         left: 8px;
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
         stroke: var(--dim);
         fill: none;
         stroke-width: 2;
@@ -161,199 +195,63 @@
         pointer-events: none;
       }
       #search {
-        padding: 6px 8px 6px 28px;
+        padding: 6px 8px 6px 26px;
         border-radius: 6px;
         border: 1px solid var(--border);
-        background: #0d1117;
+        background: #0b0e11;
         color: #e6edf3;
-        font-size: 13px;
-        width: 160px;
+        font-size: 12px;
+        width: 150px;
+        font-family: inherit;
       }
       #search:focus {
         outline: none;
-        border-color: var(--blue);
+        border-color: var(--accent);
       }
 
-      /* Panel overlay */
-      .overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 200;
-        align-items: flex-start;
-        justify-content: flex-end;
-        padding: 56px 12px 12px;
+      .content {
+        flex: 1;
+        overflow: auto;
+        padding: 12px 16px;
       }
-      .overlay.open {
-        display: flex;
-      }
-      .panel {
-        background: #161b22;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 18px;
-        width: 320px;
-        max-height: calc(100vh - 80px);
-        overflow-y: auto;
-        animation: slideIn 0.15s ease;
-      }
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .panel h3 {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 14px;
-        color: #e6edf3;
-      }
-      .panel label {
-        font-size: 13px;
-        color: var(--dim);
-        display: block;
-        margin-bottom: 4px;
-      }
-      .panel input[type="text"],
-      .panel input[type="number"] {
-        width: 100%;
-        padding: 7px 10px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-        background: #0d1117;
-        color: #e6edf3;
-        font-size: 13px;
+      .progress-bar {
+        height: 2px;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.3s ease;
+        border-radius: 1px;
         margin-bottom: 10px;
       }
-      .panel input[type="text"]:focus,
-      .panel input[type="number"]:focus {
-        outline: none;
-        border-color: var(--blue);
-      }
-      .panel-footer {
-        display: flex;
-        gap: 8px;
-        margin-top: 14px;
-      }
-      .panel-footer .btn {
-        flex: 1;
-        justify-content: center;
-      }
-      .sep {
-        height: 1px;
-        background: var(--border);
-        margin: 14px 0;
-      }
-      .panel-section {
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--dim);
-        margin-bottom: 8px;
-      }
 
-      /* Coin list in panel */
-      .coin-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .coin-item:last-child {
-        border-bottom: none;
-      }
-      .coin-item span {
-        flex: 1;
-        font-size: 13px;
-      }
-      .coin-list {
-        max-height: 260px;
-        overflow-y: auto;
-        margin: 10px 0;
-      }
-
-      /* Col toggles */
-      .col-toggle {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 5px 0;
-        font-size: 13px;
-        cursor: pointer;
-      }
-      .col-toggle input {
-        cursor: pointer;
-        accent-color: var(--blue);
-      }
-
-      /* Alert list */
-      .alert-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 0;
-        border-bottom: 1px solid var(--border);
-      }
-      .alert-item:last-child {
-        border-bottom: none;
-      }
-      .alert-item span {
-        flex: 1;
-        font-size: 12px;
-        color: var(--dim);
-      }
-      .alert-badge {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: 600;
-      }
-      .alert-above {
-        background: rgba(38, 166, 65, 0.15);
-        color: #26a641;
-      }
-      .alert-below {
-        background: rgba(218, 54, 51, 0.15);
-        color: #da3633;
-      }
-
-      /* Table */
       .table-wrap {
-        border-radius: 10px;
+        border-radius: 8px;
         overflow: hidden;
         border: 1px solid var(--border);
+        background: var(--surface);
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        background: #161b22;
-        font-size: 13px;
+        font-size: 12px;
       }
       th,
       td {
-        padding: 10px 12px;
+        padding: 9px 10px;
         text-align: right;
         border-bottom: 1px solid var(--border);
       }
       th {
-        background: #21262d;
+        background: var(--surface2);
         cursor: pointer;
         user-select: none;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--dim);
         white-space: nowrap;
+        letter-spacing: 0.03em;
       }
       th:hover {
-        background: #30363d;
+        background: #222830;
         color: #e6edf3;
       }
       th:first-child,
@@ -364,17 +262,53 @@
         border-bottom: none;
       }
       tr.data-row:hover {
-        background: #1c2128;
+        background: #1a2028;
         cursor: pointer;
       }
-      .sym {
-        color: #58a6ff;
+      .sym-cell {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sym-link {
+        color: #539bf5;
         font-weight: 600;
         font-size: 13px;
-      }
-      .sym:hover {
-        text-decoration: underline;
         cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .sym-link:hover {
+        text-decoration: underline;
+        color: #79b8ff;
+      }
+      .sym-link svg {
+        width: 11px;
+        height: 11px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.6;
+      }
+      .star-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px;
+        line-height: 1;
+        color: var(--dim);
+        font-size: 14px;
+        transition: transform 0.15s;
+      }
+      .star-btn:hover {
+        transform: scale(1.25);
+      }
+      .star-btn.on {
+        color: #e3b341;
       }
       .pos {
         color: #26a641;
@@ -387,129 +321,321 @@
       .zero {
         color: var(--dim);
       }
-      .star-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-        color: var(--dim);
-        padding: 0 6px 0 0;
-        line-height: 1;
-        transition:
-          color 0.2s,
-          transform 0.15s;
-      }
-      .star-btn:hover {
-        transform: scale(1.2);
-      }
-      .star-btn.on {
-        color: #26a641;
-        filter: drop-shadow(0 0 4px rgba(38, 166, 65, 0.5));
-      }
       .loading-row td {
         text-align: center;
-        padding: 40px;
+        padding: 50px;
         color: var(--dim);
       }
+      .empty-state {
+        text-align: center;
+        padding: 48px 20px;
+        color: var(--dim);
+        font-size: 13px;
+      }
+      .empty-state strong {
+        color: #539bf5;
+      }
 
-      /* Expand row */
       .expand-row td {
         padding: 0;
       }
       .expand-inner {
-        padding: 16px 20px;
-        background: #0d1117;
+        padding: 14px 18px;
+        background: #0b0e11;
         border-top: 1px solid var(--border);
       }
       .expand-inner h4 {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
+        color: #e6edf3;
       }
       .pos-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 14px;
+        gap: 8px;
+        margin-bottom: 10px;
       }
       .pos-field label {
-        font-size: 11px;
+        font-size: 10px;
         color: var(--dim);
-        margin-bottom: 4px;
         display: block;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       .pos-field input {
         width: 100%;
-        padding: 7px 10px;
-        border-radius: 6px;
+        padding: 6px 8px;
+        border-radius: 4px;
         border: 1px solid var(--border);
-        background: #161b22;
+        background: var(--surface);
         color: #e6edf3;
-        font-size: 13px;
+        font-size: 12px;
+        font-family: inherit;
       }
       .pos-field input:focus {
         outline: none;
-        border-color: var(--blue);
+        border-color: var(--accent);
       }
       .pos-actions {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
         align-items: center;
       }
       .pos-msg {
-        font-size: 13px;
-        margin: 10px 0;
+        font-size: 12px;
+        margin: 8px 0;
       }
 
-      /* Notification badge */
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        z-index: 200;
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding: 52px 12px 12px;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        width: 340px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        animation: slideIn 0.15s ease;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .panel h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #e6edf3;
+      }
+      .panel label {
+        font-size: 11px;
+        color: var(--dim);
+        display: block;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .panel input[type="text"],
+      .panel input[type="number"],
+      .panel select,
+      .panel textarea {
+        width: 100%;
+        padding: 7px 9px;
+        border-radius: 5px;
+        border: 1px solid var(--border);
+        background: #0b0e11;
+        color: #e6edf3;
+        font-size: 12px;
+        margin-bottom: 8px;
+        font-family: inherit;
+      }
+      .panel input:focus,
+      .panel select:focus,
+      .panel textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .panel textarea {
+        resize: vertical;
+        font-family: "SF Mono", "Consolas", monospace;
+      }
+      .panel-footer {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .panel-footer .btn {
+        flex: 1;
+        justify-content: center;
+      }
+      .sep {
+        height: 1px;
+        background: var(--border);
+        margin: 12px 0;
+      }
+      .panel-section {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--dim);
+        margin-bottom: 6px;
+      }
+      .coin-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+      }
+      .coin-item:last-child {
+        border-bottom: none;
+      }
+      .coin-item span {
+        flex: 1;
+      }
+      .coin-list {
+        max-height: 240px;
+        overflow-y: auto;
+        margin: 8px 0;
+      }
+      .col-toggle {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 0;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .col-toggle input {
+        accent-color: var(--accent);
+      }
+      .alert-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+      }
+      .alert-item:last-child {
+        border-bottom: none;
+      }
+      .alert-item span {
+        flex: 1;
+        color: var(--dim);
+      }
+      .alert-badge {
+        font-size: 9px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge-up {
+        background: rgba(38, 166, 65, 0.15);
+        color: #26a641;
+      }
+      .badge-down {
+        background: rgba(218, 54, 51, 0.15);
+        color: #da3633;
+      }
       .notif-dot {
-        width: 7px;
-        height: 7px;
+        width: 6px;
+        height: 6px;
         background: #da3633;
         border-radius: 50%;
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 4px;
+        right: 4px;
         display: none;
       }
-
-      /* Batch import textarea */
-      .panel textarea {
-        width: 100%;
-        padding: 7px 10px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-        background: #0d1117;
-        color: #e6edf3;
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0;
         font-size: 12px;
-        margin-bottom: 10px;
-        font-family: monospace;
-        resize: vertical;
       }
-
-      /* Sort arrow */
-      th .arr {
-        color: var(--blue);
-        margin-left: 3px;
+      .toggle-row span {
+        color: #e6edf3;
       }
-
-      /* Progress bar */
-      .progress-bar {
-        height: 3px;
-        background: var(--blue);
-        width: 0%;
-        transition: width 0.3s;
-        border-radius: 2px;
-        margin-bottom: 8px;
+      .toggle-switch {
+        position: relative;
+        width: 38px;
+        height: 20px;
+        background: var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
       }
-
-      /* Empty state */
-      .empty {
+      .toggle-switch.active {
+        background: #1f6feb;
+      }
+      .toggle-switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s;
+      }
+      .toggle-switch.active::after {
+        transform: translateX(18px);
+      }
+      .scan-card {
+        background: #0b0e11;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 10px;
+        margin-bottom: 7px;
+      }
+      .scan-card .sc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .scan-card .sc-sym {
+        font-weight: 700;
+        color: #539bf5;
+        font-size: 13px;
+      }
+      .scan-card .sc-score {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 3px;
+        background: rgba(218, 54, 51, 0.12);
+        color: #da3633;
+      }
+      .scan-card .sc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px;
+        font-size: 11px;
         text-align: center;
-        padding: 48px 20px;
+      }
+      .scan-card .sc-grid .sc-val {
+        font-weight: 700;
+      }
+      .diag-box {
+        font-size: 10px;
         color: var(--dim);
-        font-size: 14px;
+        margin-bottom: 8px;
+        padding: 7px 9px;
+        background: #0b0e11;
+        border-radius: 5px;
+        border: 1px solid var(--border);
+        line-height: 1.5;
+      }
+      .diag-box strong {
+        color: #e6edf3;
       }
     </style>
   </head>
@@ -517,23 +643,13 @@
     <div class="app">
       <!-- TOP BAR -->
       <div class="topbar">
-        <span class="topbar" style="padding: 0; gap: 6px; align-items: center">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#58a6ff"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+        <span class="logo">
+          <svg viewBox="0 0 24 24">
             <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
             <polyline points="16 7 22 7 22 13" />
           </svg>
-          <h1>CryptoTrack</h1>
+          CryptoTrack
         </span>
-
         <div class="search-wrap">
           <svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8" />
@@ -542,57 +658,35 @@
           <input
             type="text"
             id="search"
-            placeholder="Search…"
+            placeholder="Filter coins…"
             oninput="render()"
           />
         </div>
-
-        <button
-          class="btn btn-gray"
-          id="btnFav"
-          onclick="toggleFavFilter()"
-          style="gap: 4px"
-        >
+        <button class="btn" id="btnFav" onclick="toggleFavFilter()">
           ⭐ Watchlist
         </button>
         <button class="btn btn-green" onclick="manualRefresh()">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polyline points="23 4 23 10 17 10" />
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-          </svg>
-          Refresh
+          ↻ Refresh
         </button>
-        <button class="btn btn-purple" onclick="openPanel('managePanel')">
-          Manage Coins
-        </button>
-        <button
-          class="btn btn-blue"
-          onclick="openPanel('alertPanel')"
-          style="position: relative"
-        >
-          🔔 Alerts
-          <span class="notif-dot" id="alertDot"></span>
+        <button class="btn btn-accent" onclick="openPanel('managePanel')">
+          Manage
         </button>
         <button
           class="btn"
-          id="btnScanner"
-          style="background: #e3b341; color: #161b22; position: relative"
-          onclick="openPanel('scannerPanel')"
+          onclick="openPanel('alertPanel')"
+          style="position: relative"
         >
-          🎯 Dip Scanner
-          <span
+          🔔 Alerts<span class="notif-dot" id="alertDot"></span>
+        </button>
+        <button
+          class="btn btn-gold"
+          onclick="openPanel('scannerPanel')"
+          style="position: relative"
+        >
+          🎯 Scanner<span
             class="notif-dot"
             id="scanDot"
-            style="background: var(--green)"
+            style="background: #26a641"
           ></span>
         </button>
         <button
@@ -619,28 +713,29 @@
           </svg>
         </button>
         <div class="spacer"></div>
-        <span class="status" id="statusText"></span>
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Ready</span>
       </div>
 
       <!-- CONTENT -->
       <div class="content">
         <div class="progress-bar" id="progressBar"></div>
         <div class="table-wrap">
-          <table id="tbl">
+          <table>
             <thead id="thead">
               <tr>
-                <th onclick="sortBy(0)">Coin</th>
-                <th onclick="sortBy(1)" data-col="changes">vs Avg</th>
-                <th onclick="sortBy(2)" data-col="volchange">Vol Δ</th>
-                <th onclick="sortBy(3)" data-col="24h">24h %</th>
-                <th onclick="sortBy(4)" data-col="7d">7d %</th>
-                <th onclick="sortBy(5)" data-col="30d">30d %</th>
-                <th onclick="sortBy(6)" data-col="price">Price</th>
-                <th onclick="sortBy(7)" data-col="avg">Avg Price</th>
-                <th onclick="sortBy(8)" data-col="high">Avg High</th>
-                <th onclick="sortBy(9)" data-col="low">Avg Low</th>
-                <th onclick="sortBy(10)" data-col="volume">24h Vol</th>
-                <th data-col="profit">Profit</th>
+                <th onclick="sortBy(0)" data-label="Coin">Coin</th>
+                <th onclick="sortBy(1)" data-label="vs Avg">vs Avg</th>
+                <th onclick="sortBy(2)" data-label="Vol Δ">Vol Δ</th>
+                <th onclick="sortBy(3)" data-label="24h %">24h %</th>
+                <th onclick="sortBy(4)" data-label="7d %">7d %</th>
+                <th onclick="sortBy(5)" data-label="30d %">30d %</th>
+                <th onclick="sortBy(6)" data-label="Price">Price</th>
+                <th onclick="sortBy(7)" data-label="Avg Price">Avg Price</th>
+                <th onclick="sortBy(8)" data-label="Avg High">Avg High</th>
+                <th onclick="sortBy(9)" data-label="Avg Low">Avg Low</th>
+                <th onclick="sortBy(10)" data-label="24h Vol">24h Vol</th>
+                <th data-label="Profit">Profit</th>
               </tr>
             </thead>
             <tbody id="tbody">
@@ -653,7 +748,7 @@
       </div>
     </div>
 
-    <!-- OVERLAYS -->
+    <!-- MANAGE PANEL -->
     <div
       class="overlay"
       id="ov-managePanel"
@@ -662,11 +757,10 @@
       <div class="panel" id="managePanel">
         <h3>Manage Coins</h3>
         <div class="panel-section">Add single coin</div>
-        <label>Symbol (e.g. BTCUSDT)</label>
         <input
           type="text"
           id="newSymbol"
-          placeholder="BTCUSDT"
+          placeholder="e.g. BTCUSDT"
           style="text-transform: uppercase"
           onkeydown="if (event.key === 'Enter') addCoin();"
         />
@@ -678,53 +772,34 @@
           + Add Coin
         </button>
         <div class="sep"></div>
-        <div class="panel-section">Quick-add by strategy</div>
-        <select
-          id="strategyPick"
-          style="
-            width: 100%;
-            padding: 7px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: #0d1117;
-            color: #e6edf3;
-            font-size: 13px;
-            margin-bottom: 8px;
-          "
-        >
-          <option value="">— Pick a strategy pack —</option>
-          <option value="largecap">Large Cap (BTC, ETH, BNB, SOL, XRP…)</option>
-          <option value="defi">DeFi (AAVE, UNI, CRV, COMP, MKR…)</option>
-          <option value="l2">Layer 2 (ARB, OP, MATIC, IMX, STRK…)</option>
-          <option value="ai">AI & Data (FET, OCEAN, AGIX, GRT, BAND…)</option>
-          <option value="gaming">
-            Gaming & Metaverse (AXS, SAND, MANA, GALA, ENJ…)
-          </option>
-          <option value="meme">
-            Meme Coins (DOGE, SHIB, PEPE, FLOKI, BONK…)
-          </option>
-          <option value="privacy">Privacy (XMR, ZEC, SCRT…)</option>
-          <option value="infra">
-            Infrastructure (LINK, DOT, ATOM, ICP, AR…)
-          </option>
+        <div class="panel-section">Strategy packs</div>
+        <select id="strategyPick">
+          <option value="">— Pick a pack —</option>
+          <option value="largecap">Large Cap</option>
+          <option value="defi">DeFi</option>
+          <option value="l2">Layer 2</option>
+          <option value="ai">AI & Data</option>
+          <option value="gaming">Gaming & Metaverse</option>
+          <option value="meme">Meme Coins</option>
+          <option value="privacy">Privacy</option>
+          <option value="infra">Infrastructure</option>
         </select>
         <button
-          class="btn btn-purple"
-          style="width: 100%; justify-content: center; margin-bottom: 10px"
+          class="btn btn-accent"
+          style="width: 100%; justify-content: center; margin-bottom: 8px"
           onclick="addStrategy()"
         >
-          + Add Strategy Pack
+          + Add Pack
         </button>
         <div class="sep"></div>
-        <div class="panel-section">Bulk add (paste list)</div>
-        <label>One symbol per line or comma-separated</label>
+        <div class="panel-section">Bulk add</div>
         <textarea
           id="bulkSymbols"
-          rows="4"
-          placeholder="ETHUSDT&#10;SOLUSDT&#10;ADAUSDT"
+          rows="3"
+          placeholder="One per line or comma-separated"
         ></textarea>
         <button
-          class="btn btn-blue"
+          class="btn btn-accent"
           style="width: 100%; justify-content: center"
           onclick="bulkAdd()"
         >
@@ -732,7 +807,7 @@
         </button>
         <div class="sep"></div>
         <div class="panel-section">
-          Coin list (<span id="coinCount">0</span>)
+          Your coins (<span id="coinCount">0</span>)
         </div>
         <div class="coin-list" id="coinList"></div>
         <div class="panel-footer">
@@ -741,6 +816,7 @@
       </div>
     </div>
 
+    <!-- ALERT PANEL -->
     <div
       class="overlay"
       id="ov-alertPanel"
@@ -749,41 +825,26 @@
       <div class="panel" id="alertPanel">
         <h3>Price Alerts</h3>
         <div class="panel-section">New alert</div>
-        <label>Symbol</label>
         <input
           type="text"
           id="alertSym"
-          placeholder="e.g. BTC or BTCUSDT"
+          placeholder="Symbol (e.g. BTC)"
           style="text-transform: uppercase"
         />
-        <label>Condition</label>
-        <select
-          id="alertCond"
-          style="
-            width: 100%;
-            padding: 7px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: #0d1117;
-            color: #e6edf3;
-            font-size: 13px;
-            margin-bottom: 10px;
-          "
-        >
+        <select id="alertCond">
           <option value="above">Price rises above</option>
           <option value="below">Price drops below</option>
           <option value="vsavg_above">% vs Avg rises above</option>
           <option value="vsavg_below">% vs Avg drops below</option>
         </select>
-        <label>Value</label>
         <input
           type="number"
           id="alertVal"
-          placeholder="e.g. 50000"
+          placeholder="Value (e.g. 50000)"
           step="any"
         />
         <button
-          class="btn btn-blue"
+          class="btn btn-accent"
           style="width: 100%; justify-content: center"
           onclick="addAlert()"
         >
@@ -792,36 +853,17 @@
         <div class="sep"></div>
         <div class="panel-section">Active alerts</div>
         <div id="alertList">
-          <div style="font-size: 13px; color: var(--dim); padding: 10px 0">
-            No alerts yet.
+          <div style="font-size: 12px; color: var(--dim); padding: 8px 0">
+            No alerts set.
           </div>
         </div>
-        <div class="sep"></div>
-        <div class="panel-section">Browser notifications</div>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-          "
-        >
-          <input
-            type="checkbox"
-            id="notifEnabled"
-            style="accent-color: var(--blue)"
-          />
-          <label for="notifEnabled" style="font-size: 13px; cursor: pointer"
-            >Enable browser notifications</label
-          >
-        </div>
-        <div id="notifStatus" style="font-size: 12px; color: var(--dim)"></div>
         <div class="panel-footer">
           <button class="btn btn-red" onclick="closeAll()">Close</button>
         </div>
       </div>
     </div>
 
+    <!-- SCANNER PANEL -->
     <div
       class="overlay"
       id="ov-scannerPanel"
@@ -829,120 +871,35 @@
     >
       <div class="panel" id="scannerPanel" style="width: 380px">
         <h3>🎯 Dip Scanner</h3>
-        <p style="font-size: 12px; color: var(--dim); margin-bottom: 14px">
-          Finds coins that dropped hard with a volume spike — potential reversal
-          or accumulation signals.
+        <p style="font-size: 11px; color: var(--dim); margin-bottom: 10px">
+          Finds coins with heavy drops + volume spikes — potential reversal
+          signals.
         </p>
         <div
           style="
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 10px;
           "
         >
           <div>
-            <label
-              style="
-                font-size: 11px;
-                color: var(--dim);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Min price drop (24h %)</label
-            >
-            <input
-              type="number"
-              id="scanDrop"
-              value="-5"
-              step="0.5"
-              style="
-                width: 100%;
-                padding: 7px 10px;
-                border-radius: 6px;
-                border: 1px solid var(--border);
-                background: #0d1117;
-                color: #e6edf3;
-                font-size: 13px;
-              "
-            />
+            <label>Min 24h drop (%)</label
+            ><input type="number" id="scanDrop" value="-5" step="0.5" />
           </div>
           <div>
-            <label
-              style="
-                font-size: 11px;
-                color: var(--dim);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Min volume spike (% above avg)</label
-            >
-            <input
-              type="number"
-              id="scanVol"
-              value="50"
-              step="10"
-              style="
-                width: 100%;
-                padding: 7px 10px;
-                border-radius: 6px;
-                border: 1px solid var(--border);
-                background: #0d1117;
-                color: #e6edf3;
-                font-size: 13px;
-              "
-            />
+            <label>Min vol spike (% above avg)</label
+            ><input type="number" id="scanVol" value="50" step="10" />
           </div>
           <div>
-            <label
-              style="
-                font-size: 11px;
-                color: var(--dim);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Min drop vs Avg price (%)</label
-            >
-            <input
-              type="number"
-              id="scanVsAvg"
-              value="-10"
-              step="1"
-              style="
-                width: 100%;
-                padding: 7px 10px;
-                border-radius: 6px;
-                border: 1px solid var(--border);
-                background: #0d1117;
-                color: #e6edf3;
-                font-size: 13px;
-              "
-            />
+            <label>Min drop vs Avg (%)</label
+            ><input type="number" id="scanVsAvg" value="-10" step="1" />
           </div>
           <div>
-            <label
-              style="
-                font-size: 11px;
-                color: var(--dim);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Sort by</label
-            >
-            <select
-              id="scanSort"
-              style="
-                width: 100%;
-                padding: 7px 10px;
-                border-radius: 6px;
-                border: 1px solid var(--border);
-                background: #0d1117;
-                color: #e6edf3;
-                font-size: 13px;
-              "
-            >
+            <label>Sort by</label
+            ><select id="scanSort">
               <option value="score">Opportunity score</option>
-              <option value="drop">Biggest 24h drop</option>
+              <option value="drop">Biggest drop</option>
               <option value="vol">Highest vol spike</option>
               <option value="vsavg">Most below avg</option>
             </select>
@@ -950,7 +907,7 @@
         </div>
         <button
           class="btn btn-green"
-          style="width: 100%; justify-content: center; margin-bottom: 14px"
+          style="width: 100%; justify-content: center; margin-bottom: 10px"
           onclick="runScanner()"
         >
           Run Scanner
@@ -958,35 +915,37 @@
         <div id="scanResults">
           <div
             style="
-              font-size: 13px;
+              font-size: 12px;
               color: var(--dim);
               text-align: center;
-              padding: 20px 0;
+              padding: 16px 0;
             "
           >
             Hit Run Scanner to find opportunities.
           </div>
         </div>
         <div class="panel-footer">
-          <button class="btn btn-gray" onclick="closeAll()">Close</button>
+          <button class="btn btn-red" onclick="closeAll()">Close</button>
         </div>
       </div>
     </div>
 
+    <!-- COLUMNS PANEL -->
     <div
       class="overlay"
       id="ov-colPanel"
       onclick="if (event.target === this) closeAll();"
     >
       <div class="panel" id="colPanel">
-        <h3>Columns</h3>
+        <h3>Toggle Columns</h3>
         <div id="colToggles"></div>
         <div class="panel-footer">
-          <button class="btn btn-gray" onclick="closeAll()">Done</button>
+          <button class="btn btn-red" onclick="closeAll()">Done</button>
         </div>
       </div>
     </div>
 
+    <!-- SETTINGS PANEL -->
     <div
       class="overlay"
       id="ov-settingsPanel"
@@ -994,16 +953,48 @@
     >
       <div class="panel" id="settingsPanel">
         <h3>Settings</h3>
+        <div class="panel-section">Auto-refresh</div>
+        <div class="toggle-row">
+          <span>Enable auto-refresh</span>
+          <div
+            class="toggle-switch"
+            id="toggleAutoRefresh"
+            onclick="toggleAutoRefresh()"
+          ></div>
+        </div>
+        <label style="margin-top: 6px">Refresh interval (minutes)</label>
+        <input type="number" id="setRefreshMin" value="60" min="1" />
+        <label
+          >Watchlist refresh (minutes)
+          <span
+            style="font-weight: 400; text-transform: none; letter-spacing: 0"
+            >— more frequent for favorites</span
+          ></label
+        >
+        <input type="number" id="setWatchRefreshMin" value="15" min="1" />
+        <div class="sep"></div>
         <div class="panel-section">Data</div>
         <label>Average period (days)</label>
         <input type="number" id="setAvgDays" value="35" min="1" />
-        <label>Auto-refresh interval (minutes)</label>
-        <input type="number" id="setRefreshMin" value="60" min="1" />
+        <div class="sep"></div>
+        <div class="panel-section">Notifications</div>
+        <div class="toggle-row">
+          <span>Browser notifications</span>
+          <div
+            class="toggle-switch"
+            id="toggleNotif"
+            onclick="toggleNotif()"
+          ></div>
+        </div>
+        <div
+          id="notifStatus"
+          style="font-size: 10px; color: var(--dim); margin-top: 4px"
+        ></div>
         <div class="sep"></div>
         <div class="panel-section">Backup</div>
         <button
-          class="btn btn-blue"
-          style="width: 100%; justify-content: center; margin-bottom: 8px"
+          class="btn btn-accent"
+          style="width: 100%; justify-content: center; margin-bottom: 6px"
           onclick="exportData()"
         >
           Export backup
@@ -1015,13 +1006,13 @@
           onchange="importData(this)"
         />
         <button
-          class="btn btn-gray"
+          class="btn"
           style="width: 100%; justify-content: center"
           onclick="document.getElementById('importFile').click()"
         >
           Import backup
         </button>
-        <div class="panel-footer" style="margin-top: 18px">
+        <div class="panel-footer" style="margin-top: 14px">
           <button class="btn btn-green" onclick="saveSettings()">Save</button>
           <button class="btn btn-red" onclick="closeAll()">Cancel</button>
         </div>
@@ -1030,13 +1021,14 @@
 
     <script>
       const { DateTime } = luxon;
-      const CACHE = "cryptotrack_v1";
+      const CACHE_KEY = "cryptotrack_v2";
       let coinData = {},
         positions = {},
         myCoins = [],
         favorites = [];
       let priceAlerts = [];
       let notifEnabled = false;
+      let autoRefreshEnabled = true;
       let sortCol = 1,
         sortAsc = false,
         showFavOnly = false;
@@ -1053,8 +1045,9 @@
         volume: true,
         profit: true,
       };
-      let settings = { avgDays: 35, refreshMin: 60 };
-      let refreshTimer = null;
+      let settings = { avgDays: 35, refreshMin: 60, watchRefreshMin: 15 };
+      let mainTimer = null,
+        watchTimer = null;
       let openSym = null;
 
       const COL_LABELS = {
@@ -1070,10 +1063,22 @@
         volume: "24h Vol",
         profit: "Profit",
       };
+      const COL_MAP = {
+        changes: 1,
+        volchange: 2,
+        "24h": 3,
+        "7d": 4,
+        "30d": 5,
+        price: 6,
+        avg: 7,
+        high: 8,
+        low: 9,
+        volume: 10,
+      };
 
       function save() {
         localStorage.setItem(
-          CACHE,
+          CACHE_KEY,
           JSON.stringify({
             coinData,
             positions,
@@ -1083,14 +1088,19 @@
             settings,
             priceAlerts,
             notifEnabled,
+            autoRefreshEnabled,
           }),
         );
         document.getElementById("statusText").textContent =
-          "Updated " + DateTime.now().toFormat("HH:mm:ss");
+          "Saved " + DateTime.now().toFormat("HH:mm:ss");
+        document.getElementById("statusDot").style.background = "#26a641";
+        setTimeout(() => {
+          document.getElementById("statusDot").style.background = "#26a641";
+        }, 2000);
       }
 
       function load() {
-        const s = localStorage.getItem(CACHE);
+        const s = localStorage.getItem(CACHE_KEY);
         if (s) {
           const t = JSON.parse(s);
           coinData = t.coinData || {};
@@ -1101,19 +1111,73 @@
           settings = { ...settings, ...(t.settings || {}) };
           priceAlerts = t.priceAlerts || [];
           notifEnabled = t.notifEnabled || false;
+          autoRefreshEnabled =
+            t.autoRefreshEnabled !== undefined ? t.autoRefreshEnabled : true;
         }
-        applySettings();
+        applySettingsUI();
         renderCoinList();
         renderAlertList();
         buildColToggles();
-        startTimer();
+        startTimers();
+        updateAlertDot();
       }
 
-      function applySettings() {
+      function applySettingsUI() {
         document.getElementById("setAvgDays").value = settings.avgDays;
         document.getElementById("setRefreshMin").value = settings.refreshMin;
-        document.getElementById("notifEnabled").checked = notifEnabled;
+        document.getElementById("setWatchRefreshMin").value =
+          settings.watchRefreshMin;
+        updateToggleUI();
         updateNotifStatus();
+      }
+
+      function updateToggleUI() {
+        const tAuto = document.getElementById("toggleAutoRefresh");
+        const tNotif = document.getElementById("toggleNotif");
+        if (tAuto) {
+          tAuto.classList.toggle("active", autoRefreshEnabled);
+        }
+        if (tNotif) {
+          tNotif.classList.toggle("active", notifEnabled);
+        }
+      }
+
+      function toggleAutoRefresh() {
+        autoRefreshEnabled = !autoRefreshEnabled;
+        updateToggleUI();
+        startTimers();
+        save();
+      }
+
+      function toggleNotif() {
+        notifEnabled = !notifEnabled;
+        updateToggleUI();
+        if (notifEnabled && Notification.permission !== "granted") {
+          Notification.requestPermission().then(updateNotifStatus);
+        }
+        updateNotifStatus();
+        save();
+      }
+
+      function updateNotifStatus() {
+        const el = document.getElementById("notifStatus");
+        if (!("Notification" in window)) {
+          el.textContent = "Browser does not support notifications.";
+          return;
+        }
+        const perm = Notification.permission;
+        el.textContent =
+          perm === "granted"
+            ? "✓ Notifications allowed"
+            : perm === "denied"
+              ? "✗ Blocked — check browser settings"
+              : "Click toggle to request permission";
+        el.style.color =
+          perm === "granted"
+            ? "#26a641"
+            : perm === "denied"
+              ? "#da3633"
+              : "var(--dim)";
       }
 
       function fmtPrice(p) {
@@ -1129,6 +1193,7 @@
           })
         );
       }
+
       function fmtVol(v) {
         if (!v) return "$0";
         if (v >= 1e12) return "$" + (v / 1e12).toFixed(2) + "T";
@@ -1137,11 +1202,13 @@
         if (v >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
         return "$" + v.toFixed(0);
       }
+
       function pctClass(n) {
         return n > 0 ? "pos" : n < 0 ? "neg" : "zero";
       }
-      function pctStr(n, digits = 2) {
-        return (n >= 0 ? "+" : "") + n.toFixed(digits) + "%";
+
+      function pctStr(n, d = 2) {
+        return (n >= 0 ? "+" : "") + n.toFixed(d) + "%";
       }
 
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1151,6 +1218,7 @@
         const arr = await r.json();
         return Object.fromEntries(arr.map((t) => [t.symbol, t]));
       }
+
       async function getKlines(sym) {
         const days = settings.avgDays || 35;
         const r = await fetch(
@@ -1183,44 +1251,52 @@
         };
       }
 
-      async function refreshData(force = false) {
-        const target = !force && favorites.length > 0 ? favorites : myCoins;
+      async function refreshData(targetSyms = null) {
+        const target = targetSyms || myCoins;
         if (!target.length) return;
-        setStatus(force ? "Refreshing all…" : "Auto-refreshing…");
         const bar = document.getElementById("progressBar");
         bar.style.width = "0%";
+        document.getElementById("statusText").textContent = "Refreshing…";
+        document.getElementById("statusDot").style.background = "#e3b341";
         try {
           const tickers = await getTickers();
-          for (let i = 0; i < target.length; i++) {
-            const sym = target[i];
-            bar.style.width = ((i + 1) / target.length) * 100 + "%";
-            if (force || !coinData[sym] || favorites.includes(sym)) {
-              try {
-                await sleep(180);
-                const k = await getKlines(sym);
-                const t = tickers[sym] || {};
-                const curVol = +(t.quoteVolume || 0);
-                const volChange =
-                  k.avgVolume > 0
-                    ? ((curVol - k.avgVolume) / k.avgVolume) * 100
-                    : 0;
-                coinData[sym] = {
-                  sym: sym.replace("USDT", ""),
-                  fullSym: sym,
-                  price: +(t.lastPrice || k.price),
-                  change24h: +(t.priceChangePercent || k.change24h),
-                  change7d: k.change7d,
-                  change30d: k.change30d,
-                  avgPrice: k.avgPrice,
-                  avgHigh: k.avgHigh,
-                  avgLow: k.avgLow,
-                  volume24h: curVol,
-                  volChange,
-                  vsAvg: k.vsAvg,
-                };
-              } catch (e) {
-                console.warn("skip", sym, e);
-              }
+          const toFetch = target.filter(
+            (s) =>
+              !coinData[s] ||
+              targetSyms !== null ||
+              favorites.includes(s) ||
+              targetSyms === null,
+          );
+          const fetchSet = new Set(toFetch);
+          const allFetch = [...fetchSet];
+          for (let i = 0; i < allFetch.length; i++) {
+            const sym = allFetch[i];
+            bar.style.width = ((i + 1) / allFetch.length) * 100 + "%";
+            try {
+              await sleep(180);
+              const k = await getKlines(sym);
+              const t = tickers[sym] || {};
+              const curVol = +(t.quoteVolume || 0);
+              const volChange =
+                k.avgVolume > 0
+                  ? ((curVol - k.avgVolume) / k.avgVolume) * 100
+                  : 0;
+              coinData[sym] = {
+                sym: sym.replace("USDT", ""),
+                fullSym: sym,
+                price: +(t.lastPrice || k.price),
+                change24h: +(t.priceChangePercent || k.change24h),
+                change7d: k.change7d,
+                change30d: k.change30d,
+                avgPrice: k.avgPrice,
+                avgHigh: k.avgHigh,
+                avgLow: k.avgLow,
+                volume24h: curVol,
+                volChange,
+                vsAvg: k.vsAvg,
+              };
+            } catch (e) {
+              console.warn("Skip", sym, e);
             }
           }
         } catch (e) {
@@ -1229,60 +1305,57 @@
         bar.style.width = "100%";
         setTimeout(() => {
           bar.style.width = "0%";
-        }, 600);
+        }, 500);
+        document.getElementById("statusText").textContent =
+          "Updated " + DateTime.now().toFormat("HH:mm:ss");
+        document.getElementById("statusDot").style.background = "#26a641";
         save();
         render();
         checkAlerts();
       }
 
       function manualRefresh() {
-        refreshData(true);
+        refreshData(null);
       }
 
-      function setStatus(msg) {
-        document.getElementById("statusText").textContent = msg;
-      }
-
-      function startTimer() {
-        if (refreshTimer) clearInterval(refreshTimer);
-        const min = parseInt(settings.refreshMin) || 60;
-        refreshTimer = setInterval(() => refreshData(false), min * 60000);
+      function startTimers() {
+        if (mainTimer) clearInterval(mainTimer);
+        if (watchTimer) clearInterval(watchTimer);
+        if (!autoRefreshEnabled) {
+          document.getElementById("statusText").textContent =
+            "Auto-refresh off";
+          return;
+        }
+        const mainMin = Math.max(1, parseInt(settings.refreshMin) || 60);
+        const watchMin = Math.max(1, parseInt(settings.watchRefreshMin) || 15);
+        mainTimer = setInterval(() => refreshData(null), mainMin * 60000);
+        if (favorites.length > 0) {
+          watchTimer = setInterval(
+            () => refreshData(favorites),
+            watchMin * 60000,
+          );
+        }
+        document.getElementById("statusText").textContent =
+          `Auto: ${mainMin}min / Watch: ${watchMin}min`;
       }
 
       function saveSettings() {
-        settings.avgDays =
-          parseInt(document.getElementById("setAvgDays").value) || 35;
-        settings.refreshMin =
-          parseInt(document.getElementById("setRefreshMin").value) || 60;
-        notifEnabled = document.getElementById("notifEnabled").checked;
-        if (notifEnabled && Notification.permission !== "granted") {
-          Notification.requestPermission().then(updateNotifStatus);
-        }
+        settings.avgDays = Math.max(
+          1,
+          parseInt(document.getElementById("setAvgDays").value) || 35,
+        );
+        settings.refreshMin = Math.max(
+          1,
+          parseInt(document.getElementById("setRefreshMin").value) || 60,
+        );
+        settings.watchRefreshMin = Math.max(
+          1,
+          parseInt(document.getElementById("setWatchRefreshMin").value) || 15,
+        );
         save();
-        startTimer();
+        startTimers();
         closeAll();
-        refreshData(true);
-      }
-
-      function updateNotifStatus() {
-        const el = document.getElementById("notifStatus");
-        if (!("Notification" in window)) {
-          el.textContent = "Browser does not support notifications.";
-          return;
-        }
-        const perm = Notification.permission;
-        el.textContent =
-          perm === "granted"
-            ? "✓ Notifications allowed."
-            : perm === "denied"
-              ? "✗ Notifications blocked. Check browser settings."
-              : "Click save to request permission.";
-        el.style.color =
-          perm === "granted"
-            ? "#26a641"
-            : perm === "denied"
-              ? "#da3633"
-              : "var(--dim)";
+        refreshData(null);
       }
 
       /* === ALERTS === */
@@ -1300,6 +1373,7 @@
         document.getElementById("alertVal").value = "";
         save();
         renderAlertList();
+        updateAlertDot();
       }
 
       function removeAlert(id) {
@@ -1313,7 +1387,7 @@
         const el = document.getElementById("alertList");
         if (!priceAlerts.length) {
           el.innerHTML =
-            '<div style="font-size:13px;color:var(--dim);padding:10px 0;">No alerts set.</div>';
+            '<div style="font-size:12px;color:var(--dim);padding:8px 0">No alerts set.</div>';
           return;
         }
         el.innerHTML = priceAlerts
@@ -1326,16 +1400,13 @@
                   : a.cond === "vsavg_above"
                     ? "% vs Avg >"
                     : "% vs Avg <";
-            const isAbove = a.cond.includes("above");
+            const isUp = a.cond.includes("above");
             return `<div class="alert-item">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:#e6edf3;">${a.sym.replace("USDT", "")}</div>
-        <div style="font-size:11px;color:var(--dim);">${label} ${a.val}</div>
-      </div>
-      <span class="alert-badge ${isAbove ? "alert-above" : "alert-below"}">${isAbove ? "↑" : "↓"}</span>
-      ${a.triggered ? '<span style="font-size:10px;color:var(--gold);">✓ Hit</span>' : ""}
-      <button class="btn btn-red btn-sm" onclick="removeAlert(${a.id})">✕</button>
-    </div>`;
+      <div><div style="font-size:12px;font-weight:600;color:#e6edf3">${a.sym.replace("USDT", "")}</div>
+      <div style="font-size:10px;color:var(--dim)">${label} ${a.val}</div></div>
+      <span class="alert-badge ${isUp ? "badge-up" : "badge-down"}">${isUp ? "↑" : "↓"}</span>
+      ${a.triggered ? '<span style="font-size:9px;color:#e3b341">✓ Hit</span>' : ""}
+      <button class="btn btn-red btn-sm" onclick="removeAlert(${a.id})">✕</button></div>`;
           })
           .join("");
       }
@@ -1356,7 +1427,7 @@
             fired++;
             if (notifEnabled && Notification.permission === "granted") {
               new Notification(`Alert: ${c.sym}`, {
-                body: `${c.sym} hit your target — ${fmtPrice(c.price)}`,
+                body: `${c.sym} hit target — ${fmtPrice(c.price)}`,
               });
             }
           }
@@ -1369,8 +1440,9 @@
       }
 
       function updateAlertDot() {
-        const hasUntriggered = priceAlerts.some((a) => !a.triggered);
-        document.getElementById("alertDot").style.display = hasUntriggered
+        document.getElementById("alertDot").style.display = priceAlerts.some(
+          (a) => !a.triggered,
+        )
           ? "block"
           : "none";
       }
@@ -1390,7 +1462,7 @@
         document.getElementById("newSymbol").value = "";
         save();
         renderCoinList();
-        refreshData(true);
+        refreshData([sym]);
       }
 
       const STRATEGIES = {
@@ -1436,7 +1508,6 @@
           "STRKUSDT",
           "ZKUSDT",
           "METISUSDT",
-          "LINEAUSDT",
           "STXUSDT",
           "MANTAUSDT",
         ],
@@ -1472,7 +1543,6 @@
           "BONKUSDT",
           "MEMEUSDT",
           "TURBOUSDT",
-          "1MBABYDOGEUSDT",
           "WIFUSDT",
           "MOODENGUSDT",
           "POPCATUSDT",
@@ -1495,7 +1565,7 @@
 
       function addStrategy() {
         const pick = document.getElementById("strategyPick").value;
-        if (!pick) return alert("Select a strategy pack first.");
+        if (!pick) return alert("Select a pack first.");
         const syms = STRATEGIES[pick] || [];
         const added = syms.filter((s) => !myCoins.includes(s));
         if (!added.length)
@@ -1504,8 +1574,8 @@
         document.getElementById("strategyPick").value = "";
         save();
         renderCoinList();
-        refreshData(true);
-        alert(`Added ${added.length} coin(s) from pack.`);
+        refreshData(added);
+        alert(`Added ${added.length} coin(s).`);
       }
 
       function bulkAdd() {
@@ -1520,7 +1590,7 @@
         document.getElementById("bulkSymbols").value = "";
         save();
         renderCoinList();
-        refreshData(true);
+        refreshData(added);
       }
 
       function removeCoin(sym) {
@@ -1538,16 +1608,13 @@
         document.getElementById("coinCount").textContent = myCoins.length;
         if (!myCoins.length) {
           el.innerHTML =
-            '<div style="font-size:13px;color:var(--dim);padding:10px 0;">No coins added yet.</div>';
+            '<div style="font-size:12px;color:var(--dim);padding:8px 0">No coins yet.</div>';
           return;
         }
         el.innerHTML = myCoins
           .map(
-            (s) => `
-    <div class="coin-item">
-      <span>${s}</span>
-      <button class="btn btn-red btn-sm" onclick="removeCoin('${s}')">Remove</button>
-    </div>`,
+            (s) =>
+              `<div class="coin-item"><span>${s}</span><button class="btn btn-red btn-sm" onclick="removeCoin('${s}')">Remove</button></div>`,
           )
           .join("");
       }
@@ -1560,11 +1627,13 @@
         else favorites.push(sym);
         save();
         render();
+        startTimers();
       }
+
       function toggleFavFilter() {
         showFavOnly = !showFavOnly;
-        const b = document.getElementById("btnFav");
-        b.className = "btn " + (showFavOnly ? "btn-gold" : "btn-gray");
+        document.getElementById("btnFav").className =
+          "btn " + (showFavOnly ? "btn-gold" : "");
         render();
       }
 
@@ -1580,6 +1649,7 @@
         const pct = ((c.price - pos.buyPrice) / pos.buyPrice) * 100;
         return { profit, pct };
       }
+
       function calcAmtFromUsdt(sym) {
         const price =
           parseFloat(document.getElementById("fp-" + sym).value) || 0;
@@ -1590,22 +1660,30 @@
             8,
           );
       }
-      function savePosition(sym) {
+
+      function savePosition(sym, e) {
+        if (e) e.stopPropagation();
         const price = parseFloat(document.getElementById("fp-" + sym).value);
         const coins = parseFloat(document.getElementById("fa-" + sym).value);
         if (!price || !coins || price <= 0 || coins <= 0)
-          return alert("Enter valid price and amount.");
+          return alert("Enter valid price and coin amount.");
         positions[sym] = { coins, buyPrice: price };
         save();
         render();
       }
-      function sellPosition(sym) {
+
+      function sellPosition(sym, e) {
+        if (e) e.stopPropagation();
         if (!positions[sym]) return;
+        if (!confirm("Mark " + sym + " as sold? This clears the position."))
+          return;
         delete positions[sym];
         save();
         render();
       }
-      function deletePosition(sym) {
+
+      function deletePosition(sym, e) {
+        if (e) e.stopPropagation();
         if (!confirm("Delete position for " + sym + "?")) return;
         delete positions[sym];
         save();
@@ -1646,7 +1724,6 @@
           return sortAsc ? A - B : B - A;
         });
 
-        // Update header arrows
         document.querySelectorAll("#thead th").forEach((th, i) => {
           const base =
             th.getAttribute("data-label") ||
@@ -1656,12 +1733,12 @@
           th.innerHTML =
             base +
             (i === sortCol
-              ? `<span class="arr">${sortAsc ? "↑" : "↓"}</span>`
+              ? `<span style="color:#539bf5;margin-left:2px">${sortAsc ? "↑" : "↓"}</span>`
               : "");
         });
 
         if (!rows.length) {
-          tbody.innerHTML = `<tr class="loading-row"><td colspan="12">${myCoins.length ? "No results." : "No coins yet — add some via Manage Coins."}</td></tr>`;
+          tbody.innerHTML = `<tr class="loading-row"><td colspan="12"><div class="empty-state">${myCoins.length ? "No results match your filter." : "<strong>Welcome!</strong> Add coins via <strong>Manage</strong> to get started."}</div></td></tr>`;
           applyColVis();
           return;
         }
@@ -1675,15 +1752,14 @@
             const profHTML =
               prof.profit !== 0
                 ? `<span class="${prof.profit >= 0 ? "pos" : "neg"}">${prof.profit >= 0 ? "+" : ""}$${Math.abs(prof.profit).toFixed(2)} <small>(${pctStr(prof.pct)})</small></span>`
-                : `<span class="zero">—</span>`;
+                : '<span class="zero">—</span>';
             const pos = positions[sym];
             const isOpen = openSym === sym;
-
             return `<tr class="data-row" onclick="toggleRow('${sym}')">
-      <td>
-        <button class="star-btn ${isFav ? "on" : ""}" onclick="toggleStar('${full}',event)" title="${isFav ? "Remove from watchlist" : "Add to watchlist"}">⭐</button>
-        <span class="sym" onclick="event.stopPropagation();window.open('https://www.binance.com/en/trade/${full}?type=spot','_blank')">${sym}</span>
-      </td>
+      <td><div class="sym-cell">
+        <button class="star-btn${isFav ? " on" : ""}" onclick="toggleStar('${full}',event)" title="${isFav ? "Remove from watchlist" : "Add to watchlist"}">${isFav ? "★" : "☆"}</button>
+        <a class="sym-link" onclick="event.stopPropagation();window.open('https://www.binance.com/en/trade/${full}?type=spot','_blank')" title="Open ${sym} on Binance" href="https://www.binance.com/en/trade/${full}?type=spot" target="_blank">${sym}<svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+      </div></td>
       <td class="${pctClass(c.vsAvg)}">${pctStr(c.vsAvg)}</td>
       <td class="${pctClass(c.volChange)}">${pctStr(c.volChange)}</td>
       <td class="${pctClass(c.change24h)}">${pctStr(c.change24h)}</td>
@@ -1697,28 +1773,25 @@
       <td>${profHTML}</td>
     </tr>
     <tr class="expand-row" style="display:${isOpen ? "table-row" : "none"}" id="exp-${sym}">
-      <td colspan="12">
-        <div class="expand-inner">
-          <h4>Position — ${sym}</h4>
-          <div class="pos-grid">
-            <div class="pos-field"><label>Buy price ($)</label><input type="number" id="fp-${sym}" value="${pos?.buyPrice || c.price}" step="any" oninput="calcAmtFromUsdt('${sym}')"></div>
-            <div class="pos-field"><label>USDT amount</label><input type="number" id="fu-${sym}" value="${pos ? (pos.coins * pos.buyPrice).toFixed(2) : ""}" placeholder="Optional" oninput="calcAmtFromUsdt('${sym}')" step="any"></div>
-            <div class="pos-field"><label>Coin amount</label><input type="number" id="fa-${sym}" value="${pos?.coins || ""}" placeholder="e.g. 1.5" step="any"></div>
-            <div class="pos-field"><label>Current value</label><input type="text" readonly value="${pos ? fmtPrice(pos.coins * c.price) : "—"}" style="color:var(--dim);cursor:default;"></div>
-          </div>
-          <div class="pos-msg" id="pm-${sym}">${pos ? `<span class="${prof.profit >= 0 ? "pos" : "neg"}">P&L: ${prof.profit >= 0 ? "+" : ""}$${prof.profit.toFixed(2)} (${pctStr(prof.pct)})</span>` : "Enter amounts above and click Buy."}</div>
-          <div class="pos-actions">
-            <button class="btn btn-green" onclick="savePosition('${sym}');event.stopPropagation()">💰 Buy</button>
-            <button class="btn btn-red" onclick="sellPosition('${sym}');event.stopPropagation()">📤 Sell</button>
-            <button class="btn btn-gray" onclick="deletePosition('${sym}');event.stopPropagation()">🗑 Delete</button>
-            <button class="btn btn-gray" onclick="openSym=null;render();event.stopPropagation()">Close</button>
-          </div>
+      <td colspan="12"><div class="expand-inner">
+        <h4>Position — ${sym}</h4>
+        <div class="pos-grid">
+          <div class="pos-field"><label>Buy price ($)</label><input type="number" id="fp-${sym}" value="${pos?.buyPrice || c.price}" step="any" oninput="calcAmtFromUsdt('${sym}')" /></div>
+          <div class="pos-field"><label>USDT amount</label><input type="number" id="fu-${sym}" value="${pos ? (pos.coins * pos.buyPrice).toFixed(2) : ""}" placeholder="Optional" oninput="calcAmtFromUsdt('${sym}')" step="any" /></div>
+          <div class="pos-field"><label>Coin amount</label><input type="number" id="fa-${sym}" value="${pos?.coins || ""}" placeholder="e.g. 1.5" step="any" /></div>
+          <div class="pos-field"><label>Current value</label><input type="text" readonly value="${pos ? fmtPrice(pos.coins * c.price) : "—"}" style="color:var(--dim);cursor:default" /></div>
         </div>
-      </td>
+        <div class="pos-msg" id="pm-${sym}">${pos ? `<span class="${prof.profit >= 0 ? "pos" : "neg"}">P&L: ${prof.profit >= 0 ? "+" : ""}$${prof.profit.toFixed(2)} (${pctStr(prof.pct)})</span>` : "Enter amounts above and click Buy."}</div>
+        <div class="pos-actions">
+          <button class="btn btn-green" onclick="savePosition('${sym}',event)">💰 Buy</button>
+          <button class="btn btn-red" onclick="sellPosition('${sym}',event)">📤 Sell</button>
+          <button class="btn" onclick="event.stopPropagation();openSym=null;render()">✕ Close</button>
+          <button class="btn btn-red" style="background:#c93c0d;border-color:#c93c0d" onclick="deletePosition('${sym}',event)">🗑 Delete</button>
+        </div>
+      </div></td>
     </tr>`;
           })
           .join("");
-
         applyColVis();
         updateAlertDot();
       }
@@ -1729,28 +1802,13 @@
       }
 
       /* === COLUMNS === */
-      const COL_MAP = {
-        changes: 1,
-        volchange: 2,
-        "24h": 3,
-        "7d": 4,
-        "30d": 5,
-        price: 6,
-        avg: 7,
-        high: 8,
-        low: 9,
-        volume: 10,
-      };
-
       function buildColToggles() {
-        const el = document.getElementById("colToggles");
-        el.innerHTML = Object.entries(COL_LABELS)
+        document.getElementById("colToggles").innerHTML = Object.entries(
+          COL_LABELS,
+        )
           .map(
-            ([k, label]) => `
-    <label class="col-toggle">
-      <input type="checkbox" ${visibleCols[k] ? "checked" : ""} onchange="toggleCol('${k}',this.checked)">
-      ${label}
-    </label>`,
+            ([k, label]) =>
+              `<label class="col-toggle"><input type="checkbox" ${visibleCols[k] ? "checked" : ""} onchange="toggleCol('${k}',this.checked)" /> ${label}</label>`,
           )
           .join("");
       }
@@ -1770,7 +1828,6 @@
             .querySelectorAll(`#tbody td:nth-child(${idx + 1})`)
             .forEach((td) => (td.style.display = show ? "" : "none"));
         });
-        // Profit col (last)
         const ptSh = visibleCols.profit;
         const ptH = document.querySelectorAll("#thead th")[11];
         if (ptH) ptH.style.display = ptSh ? "" : "none";
@@ -1797,7 +1854,12 @@
           renderAlertList();
           updateNotifStatus();
         }
+        if (id === "settingsPanel") {
+          applySettingsUI();
+          updateNotifStatus();
+        }
       }
+
       function closeAll() {
         document
           .querySelectorAll(".overlay")
@@ -1807,9 +1869,95 @@
         if (e.key === "Escape") closeAll();
       });
 
+      /* === DIP SCANNER === */
+      function runScanner() {
+        const minDrop = parseFloat(document.getElementById("scanDrop").value);
+        const minVol = parseFloat(document.getElementById("scanVol").value);
+        const minVsAvg = parseFloat(document.getElementById("scanVsAvg").value);
+        const sortKey = document.getElementById("scanSort").value;
+        const el = document.getElementById("scanResults");
+        const all = Object.values(coinData);
+        if (!all.length) {
+          el.innerHTML =
+            '<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">No data loaded.<br><small>Hit <strong>Refresh</strong> first.</small></div>';
+          return;
+        }
+        all.forEach((c) => {
+          if (c.volchange !== undefined && c.volChange === undefined)
+            c.volChange = c.volchange;
+          if (c.volChange === undefined) c.volChange = 0;
+          if (c.vsAvg === undefined) c.vsAvg = 0;
+        });
+        const passedDrop = all.filter((c) => c.change24h <= minDrop).length;
+        const passedVol = all.filter((c) => c.volChange >= minVol).length;
+        const passedVsAvg = all.filter((c) => c.vsAvg <= minVsAvg).length;
+        const hits = all.filter(
+          (c) =>
+            c.change24h <= minDrop &&
+            c.volChange >= minVol &&
+            c.vsAvg <= minVsAvg,
+        );
+        hits.forEach((c) => {
+          c._score =
+            Math.abs(c.change24h) * 0.4 +
+            (c.volChange / 100) * 0.3 +
+            Math.abs(c.vsAvg) * 0.3;
+        });
+        hits.sort((a, b) =>
+          sortKey === "drop"
+            ? a.change24h - b.change24h
+            : sortKey === "vol"
+              ? b.volChange - a.volChange
+              : sortKey === "vsavg"
+                ? a.vsAvg - b.vsAvg
+                : b._score - a._score,
+        );
+        document.getElementById("scanDot").style.display = hits.length
+          ? "block"
+          : "none";
+        const diagHTML = `<div class="diag-box"><strong>Diagnostics</strong> (${all.length} coins)<br>Drop ≤ ${minDrop}%: <span style="color:#539bf5">${passedDrop}</span> | Vol ≥ +${minVol}%: <span style="color:#539bf5">${passedVol}</span> | vs Avg ≤ ${minVsAvg}%: <span style="color:#539bf5">${passedVsAvg}</span></div>`;
+        if (!hits.length) {
+          el.innerHTML =
+            diagHTML +
+            '<div style="text-align:center;padding:14px;color:var(--dim);font-size:12px">No coins match all 3 filters.<br><small>Try loosening thresholds.</small></div>';
+          return;
+        }
+        el.innerHTML =
+          diagHTML +
+          `<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${hits.length} coin${hits.length > 1 ? "s" : ""} found</div>` +
+          hits
+            .map((c) => {
+              const scoreColor =
+                c._score > 15
+                  ? "#da3633"
+                  : c._score > 8
+                    ? "#e3b341"
+                    : "#26a641";
+              return `<div class="scan-card">
+        <div class="sc-header">
+          <span class="sc-sym">${c.sym}</span>
+          <span class="sc-score" style="color:${scoreColor}">Score ${c._score.toFixed(1)}</span>
+        </div>
+        <div class="sc-grid">
+          <div><div style="color:var(--dim)">24h Drop</div><div class="sc-val neg">${pctStr(c.change24h)}</div></div>
+          <div><div style="color:var(--dim)">Vol Spike</div><div class="sc-val" style="color:#e3b341">+${c.volChange.toFixed(0)}%</div></div>
+          <div><div style="color:var(--dim)">vs Avg</div><div class="sc-val neg">${pctStr(c.vsAvg)}</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">
+          <span style="font-size:11px;color:var(--dim)">${fmtPrice(c.price)}</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick="toggleStar('${c.fullSym}',event);runScanner()">${favorites.includes(c.fullSym) ? "★ Watching" : "☆ Watch"}</button>
+            <button class="btn btn-green btn-sm" onclick="closeAll();openSym='${c.sym}';render()">Buy</button>
+          </div>
+        </div>
+      </div>`;
+            })
+            .join("");
+      }
+
       /* === EXPORT / IMPORT === */
       function exportData() {
-        const blob = new Blob([localStorage.getItem(CACHE)], {
+        const blob = new Blob([localStorage.getItem(CACHE_KEY)], {
           type: "application/json",
         });
         const a = document.createElement("a");
@@ -1817,6 +1965,7 @@
         a.download = "cryptotrack_backup.json";
         a.click();
       }
+
       function importData(input) {
         if (!input.files || !input.files[0]) return;
         const r = new FileReader();
@@ -1824,7 +1973,7 @@
           try {
             const j = JSON.parse(e.target.result);
             if (j.coinData && j.myCoins) {
-              localStorage.setItem(CACHE, JSON.stringify(j));
+              localStorage.setItem(CACHE_KEY, JSON.stringify(j));
               location.reload();
             } else alert("Invalid backup file.");
           } catch {
@@ -1839,11 +1988,12 @@
         load();
         if (!myCoins.length) {
           document.getElementById("tbody").innerHTML =
-            '<tr class="loading-row"><td colspan="12">Welcome! Add coins via <strong>Manage Coins</strong> to get started.</td></tr>';
+            '<tr class="loading-row"><td colspan="12"><div class="empty-state"><strong>Welcome!</strong> Add coins via <strong>Manage</strong> to get started.</div></td></tr>';
         } else {
           render();
-          if (!Object.keys(coinData).length) refreshData(true);
+          if (!Object.keys(coinData).length) refreshData(null);
         }
+        if (autoRefreshEnabled) startTimers();
       };
     </script>
   </body>
