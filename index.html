@@ -364,7 +364,8 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
-      .pos-field input {
+      .pos-field input,
+      .pos-field select {
         width: 100%;
         padding: 6px 8px;
         border-radius: 4px;
@@ -374,7 +375,8 @@
         font-size: 12px;
         font-family: inherit;
       }
-      .pos-field input:focus {
+      .pos-field input:focus,
+      .pos-field select:focus {
         outline: none;
         border-color: var(--accent);
       }
@@ -407,7 +409,7 @@
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 16px;
-        width: 340px;
+        width: 400px;
         max-height: calc(100vh - 80px);
         overflow-y: auto;
         animation: slideIn 0.15s ease;
@@ -605,6 +607,11 @@
         font-weight: 700;
         color: #539bf5;
         font-size: 13px;
+        text-decoration: none;
+      }
+      .scan-card .sc-sym:hover {
+        text-decoration: underline;
+        color: #79b8ff;
       }
       .scan-card .sc-score {
         font-size: 10px;
@@ -636,6 +643,23 @@
       }
       .diag-box strong {
         color: #e6edf3;
+      }
+      .suggestion-tag {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        margin-left: 4px;
+      }
+      .tag-long {
+        background: rgba(38, 166, 65, 0.15);
+        color: #26a641;
+      }
+      .tag-short {
+        background: rgba(218, 54, 51, 0.15);
+        color: #da3633;
       }
     </style>
   </head>
@@ -683,7 +707,7 @@
           onclick="openPanel('scannerPanel')"
           style="position: relative"
         >
-          🎯 Scanner<span
+          🔍 Scan<span
             class="notif-dot"
             id="scanDot"
             style="background: #26a641"
@@ -869,48 +893,18 @@
       id="ov-scannerPanel"
       onclick="if (event.target === this) closeAll();"
     >
-      <div class="panel" id="scannerPanel" style="width: 380px">
-        <h3>🎯 Dip Scanner</h3>
-        <p style="font-size: 11px; color: var(--dim); margin-bottom: 10px">
-          Finds coins with heavy drops + volume spikes — potential reversal
-          signals.
+      <div class="panel" id="scannerPanel" style="width: 420px">
+        <h3>🔍 Opportunity Scan</h3>
+        <p style="font-size: 11px; color: var(--dim); margin-bottom: 12px">
+          Runs <strong>all four strategies</strong> simultaneously — Safe/Good
+          Long, Safe/Risky Short. Each coin gets the strongest matching tag.
         </p>
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
-          "
-        >
-          <div>
-            <label>Min 24h drop (%)</label
-            ><input type="number" id="scanDrop" value="-5" step="0.5" />
-          </div>
-          <div>
-            <label>Min vol spike (% above avg)</label
-            ><input type="number" id="scanVol" value="50" step="10" />
-          </div>
-          <div>
-            <label>Min drop vs Avg (%)</label
-            ><input type="number" id="scanVsAvg" value="-10" step="1" />
-          </div>
-          <div>
-            <label>Sort by</label
-            ><select id="scanSort">
-              <option value="score">Opportunity score</option>
-              <option value="drop">Biggest drop</option>
-              <option value="vol">Highest vol spike</option>
-              <option value="vsavg">Most below avg</option>
-            </select>
-          </div>
-        </div>
         <button
           class="btn btn-green"
-          style="width: 100%; justify-content: center; margin-bottom: 10px"
+          style="width: 100%; justify-content: center; margin-bottom: 12px"
           onclick="runScanner()"
         >
-          Run Scanner
+          Run Scan
         </button>
         <div id="scanResults">
           <div
@@ -921,7 +915,7 @@
               padding: 16px 0;
             "
           >
-            Hit Run Scanner to find opportunities.
+            Hit Run Scan to find opportunities.
           </div>
         </div>
         <div class="panel-footer">
@@ -1021,7 +1015,7 @@
 
     <script>
       const { DateTime } = luxon;
-      const CACHE_KEY = "cryptotrack_v2";
+      const CACHE_KEY = "tracker_v4";
       let coinData = {},
         positions = {},
         myCoins = [],
@@ -1049,6 +1043,43 @@
       let mainTimer = null,
         watchTimer = null;
       let openSym = null;
+      let lastScanHits = [];
+
+      // Scanner presets
+      const SCAN_STRATEGIES = [
+        {
+          name: "SAFE LONG",
+          tag: "LONG",
+          drop: -5,
+          vol: 50,
+          vsAvg: -10,
+          color: "#26a641",
+        },
+        {
+          name: "GOOD LONG",
+          tag: "LONG",
+          drop: -3,
+          vol: 80,
+          vsAvg: -5,
+          color: "#26a641",
+        },
+        {
+          name: "SAFE SHORT",
+          tag: "SHORT",
+          drop: 5,
+          vol: 80,
+          vsAvg: 10,
+          color: "#da3633",
+        },
+        {
+          name: "RISKY SHORT",
+          tag: "SHORT",
+          drop: 10,
+          vol: 100,
+          vsAvg: 15,
+          color: "#e3b341",
+        },
+      ];
 
       const COL_LABELS = {
         changes: "vs Avg",
@@ -1089,14 +1120,9 @@
             priceAlerts,
             notifEnabled,
             autoRefreshEnabled,
+            lastScanHits,
           }),
         );
-        document.getElementById("statusText").textContent =
-          "Saved " + DateTime.now().toFormat("HH:mm:ss");
-        document.getElementById("statusDot").style.background = "#26a641";
-        setTimeout(() => {
-          document.getElementById("statusDot").style.background = "#26a641";
-        }, 2000);
       }
 
       function load() {
@@ -1113,6 +1139,7 @@
           notifEnabled = t.notifEnabled || false;
           autoRefreshEnabled =
             t.autoRefreshEnabled !== undefined ? t.autoRefreshEnabled : true;
+          lastScanHits = t.lastScanHits || [];
         }
         applySettingsUI();
         renderCoinList();
@@ -1132,14 +1159,12 @@
       }
 
       function updateToggleUI() {
-        const tAuto = document.getElementById("toggleAutoRefresh");
-        const tNotif = document.getElementById("toggleNotif");
-        if (tAuto) {
-          tAuto.classList.toggle("active", autoRefreshEnabled);
-        }
-        if (tNotif) {
-          tNotif.classList.toggle("active", notifEnabled);
-        }
+        document
+          .getElementById("toggleAutoRefresh")
+          .classList.toggle("active", autoRefreshEnabled);
+        document
+          .getElementById("toggleNotif")
+          .classList.toggle("active", notifEnabled);
       }
 
       function toggleAutoRefresh() {
@@ -1172,12 +1197,6 @@
             : perm === "denied"
               ? "✗ Blocked — check browser settings"
               : "Click toggle to request permission";
-        el.style.color =
-          perm === "granted"
-            ? "#26a641"
-            : perm === "denied"
-              ? "#da3633"
-              : "var(--dim)";
       }
 
       function fmtPrice(p) {
@@ -1257,15 +1276,10 @@
         const bar = document.getElementById("progressBar");
         bar.style.width = "0%";
         document.getElementById("statusText").textContent = "Refreshing…";
-        document.getElementById("statusDot").style.background = "#e3b341";
         try {
           const tickers = await getTickers();
           const toFetch = target.filter(
-            (s) =>
-              !coinData[s] ||
-              targetSyms !== null ||
-              favorites.includes(s) ||
-              targetSyms === null,
+            (s) => !coinData[s] || targetSyms !== null || favorites.includes(s),
           );
           const fetchSet = new Set(toFetch);
           const allFetch = [...fetchSet];
@@ -1273,7 +1287,7 @@
             const sym = allFetch[i];
             bar.style.width = ((i + 1) / allFetch.length) * 100 + "%";
             try {
-              await sleep(180);
+              await sleep(50);
               const k = await getKlines(sym);
               const t = tickers[sym] || {};
               const curVol = +(t.quoteVolume || 0);
@@ -1308,7 +1322,6 @@
         }, 500);
         document.getElementById("statusText").textContent =
           "Updated " + DateTime.now().toFormat("HH:mm:ss");
-        document.getElementById("statusDot").style.background = "#26a641";
         save();
         render();
         checkAlerts();
@@ -1401,12 +1414,7 @@
                     ? "% vs Avg >"
                     : "% vs Avg <";
             const isUp = a.cond.includes("above");
-            return `<div class="alert-item">
-      <div><div style="font-size:12px;font-weight:600;color:#e6edf3">${a.sym.replace("USDT", "")}</div>
-      <div style="font-size:10px;color:var(--dim)">${label} ${a.val}</div></div>
-      <span class="alert-badge ${isUp ? "badge-up" : "badge-down"}">${isUp ? "↑" : "↓"}</span>
-      ${a.triggered ? '<span style="font-size:9px;color:#e3b341">✓ Hit</span>' : ""}
-      <button class="btn btn-red btn-sm" onclick="removeAlert(${a.id})">✕</button></div>`;
+            return `<div class="alert-item"><div><div style="font-size:12px;font-weight:600;color:#e6edf3">${a.sym.replace("USDT", "")}</div><div style="font-size:10px;color:var(--dim)">${label} ${a.val}</div></div><span class="alert-badge ${isUp ? "badge-up" : "badge-down"}">${isUp ? "↑" : "↓"}</span>${a.triggered ? '<span style="font-size:9px;color:#e3b341">✓ Hit</span>' : ""}<button class="btn btn-red btn-sm" onclick="removeAlert(${a.id})">✕</button></div>`;
           })
           .join("");
       }
@@ -1637,17 +1645,24 @@
         render();
       }
 
-      /* === POSITIONS === */
+      /* === POSITIONS (now with Long/Short) === */
       function calcProfit(sym) {
         const c =
           coinData[sym + "USDT"] ||
           Object.values(coinData).find((x) => x.sym === sym);
-        if (!c) return { profit: 0, pct: 0 };
-        const pos = positions[sym] || { coins: 0, buyPrice: 0 };
-        if (!pos.coins) return { profit: 0, pct: 0 };
-        const profit = (c.price - pos.buyPrice) * pos.coins;
-        const pct = ((c.price - pos.buyPrice) / pos.buyPrice) * 100;
-        return { profit, pct };
+        if (!c) return { profit: 0, pct: 0, isShort: false };
+        const pos = positions[sym] || { coins: 0, entryPrice: 0, type: "long" };
+        if (!pos.coins)
+          return { profit: 0, pct: 0, isShort: pos.type === "short" };
+        const isShort = pos.type === "short";
+        const profit = isShort
+          ? (pos.entryPrice - c.price) * pos.coins
+          : (c.price - pos.entryPrice) * pos.coins;
+        const pct =
+          ((isShort ? pos.entryPrice - c.price : c.price - pos.entryPrice) /
+            pos.entryPrice) *
+          100;
+        return { profit, pct, isShort };
       }
 
       function calcAmtFromUsdt(sym) {
@@ -1663,11 +1678,15 @@
 
       function savePosition(sym, e) {
         if (e) e.stopPropagation();
-        const price = parseFloat(document.getElementById("fp-" + sym).value);
+        const entryPrice = parseFloat(
+          document.getElementById("fp-" + sym).value,
+        );
         const coins = parseFloat(document.getElementById("fa-" + sym).value);
-        if (!price || !coins || price <= 0 || coins <= 0)
-          return alert("Enter valid price and coin amount.");
-        positions[sym] = { coins, buyPrice: price };
+        const typeSelect = document.getElementById("ptype-" + sym);
+        const type = typeSelect ? typeSelect.value : "long";
+        if (!entryPrice || !coins || entryPrice <= 0 || coins <= 0)
+          return alert("Enter valid entry price and coin amount.");
+        positions[sym] = { coins, entryPrice, type };
         save();
         render();
       }
@@ -1675,7 +1694,7 @@
       function sellPosition(sym, e) {
         if (e) e.stopPropagation();
         if (!positions[sym]) return;
-        if (!confirm("Mark " + sym + " as sold? This clears the position."))
+        if (!confirm("Mark " + sym + " as closed? This clears the position."))
           return;
         delete positions[sym];
         save();
@@ -1699,7 +1718,6 @@
           .filter((s) => !showFavOnly || favorites.includes(s))
           .map((s) => coinData[s])
           .filter(Boolean);
-
         const colKeys = [
           "sym",
           "vsAvg",
@@ -1723,7 +1741,6 @@
             B = +b[k] || 0;
           return sortAsc ? A - B : B - A;
         });
-
         document.querySelectorAll("#thead th").forEach((th, i) => {
           const base =
             th.getAttribute("data-label") ||
@@ -1736,13 +1753,11 @@
               ? `<span style="color:#539bf5;margin-left:2px">${sortAsc ? "↑" : "↓"}</span>`
               : "");
         });
-
         if (!rows.length) {
           tbody.innerHTML = `<tr class="loading-row"><td colspan="12"><div class="empty-state">${myCoins.length ? "No results match your filter." : "<strong>Welcome!</strong> Add coins via <strong>Manage</strong> to get started."}</div></td></tr>`;
           applyColVis();
           return;
         }
-
         tbody.innerHTML = rows
           .map((c) => {
             const sym = c.sym,
@@ -1755,45 +1770,56 @@
                 : '<span class="zero">—</span>';
             const pos = positions[sym];
             const isOpen = openSym === sym;
-            return `<tr class="data-row" onclick="toggleRow('${sym}')">
-      <td><div class="sym-cell">
-        <button class="star-btn${isFav ? " on" : ""}" onclick="toggleStar('${full}',event)" title="${isFav ? "Remove from watchlist" : "Add to watchlist"}">${isFav ? "★" : "☆"}</button>
-        <a class="sym-link" onclick="event.stopPropagation();window.open('https://www.binance.com/en/trade/${full}?type=spot','_blank')" title="Open ${sym} on Binance" href="https://www.binance.com/en/trade/${full}?type=spot" target="_blank">${sym}<svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-      </div></td>
-      <td class="${pctClass(c.vsAvg)}">${pctStr(c.vsAvg)}</td>
-      <td class="${pctClass(c.volChange)}">${pctStr(c.volChange)}</td>
-      <td class="${pctClass(c.change24h)}">${pctStr(c.change24h)}</td>
-      <td class="${pctClass(c.change7d)}">${pctStr(c.change7d)}</td>
-      <td class="${pctClass(c.change30d)}">${pctStr(c.change30d)}</td>
-      <td style="font-weight:600">${fmtPrice(c.price)}</td>
-      <td>${fmtPrice(c.avgPrice)}</td>
-      <td>${fmtPrice(c.avgHigh)}</td>
-      <td>${fmtPrice(c.avgLow)}</td>
-      <td>${fmtVol(c.volume24h)}</td>
-      <td>${profHTML}</td>
-    </tr>
-    <tr class="expand-row" style="display:${isOpen ? "table-row" : "none"}" id="exp-${sym}">
-      <td colspan="12"><div class="expand-inner">
-        <h4>Position — ${sym}</h4>
-        <div class="pos-grid">
-          <div class="pos-field"><label>Buy price ($)</label><input type="number" id="fp-${sym}" value="${pos?.buyPrice || c.price}" step="any" oninput="calcAmtFromUsdt('${sym}')" /></div>
-          <div class="pos-field"><label>USDT amount</label><input type="number" id="fu-${sym}" value="${pos ? (pos.coins * pos.buyPrice).toFixed(2) : ""}" placeholder="Optional" oninput="calcAmtFromUsdt('${sym}')" step="any" /></div>
-          <div class="pos-field"><label>Coin amount</label><input type="number" id="fa-${sym}" value="${pos?.coins || ""}" placeholder="e.g. 1.5" step="any" /></div>
-          <div class="pos-field"><label>Current value</label><input type="text" readonly value="${pos ? fmtPrice(pos.coins * c.price) : "—"}" style="color:var(--dim);cursor:default" /></div>
-        </div>
-        <div class="pos-msg" id="pm-${sym}">${pos ? `<span class="${prof.profit >= 0 ? "pos" : "neg"}">P&L: ${prof.profit >= 0 ? "+" : ""}$${prof.profit.toFixed(2)} (${pctStr(prof.pct)})</span>` : "Enter amounts above and click Buy."}</div>
-        <div class="pos-actions">
-          <button class="btn btn-green" onclick="savePosition('${sym}',event)">💰 Buy</button>
-          <button class="btn btn-red" onclick="sellPosition('${sym}',event)">📤 Sell</button>
-          <button class="btn" onclick="event.stopPropagation();openSym=null;render()">✕ Close</button>
-          <button class="btn btn-red" style="background:#c93c0d;border-color:#c93c0d" onclick="deletePosition('${sym}',event)">🗑 Delete</button>
-        </div>
-      </div></td>
-    </tr>`;
+            const posType = pos?.type || "long";
+            return `
+      <tr class="data-row" onclick="toggleRow('${sym}')">
+        <td><div class="sym-cell">
+          <button class="star-btn${isFav ? " on" : ""}" onclick="toggleStar('${full}',event)">${isFav ? "★" : "☆"}</button>
+          <a class="sym-link" onclick="event.stopPropagation();window.open('https://www.binance.com/en/trade/${full}?type=spot','_blank')" href="https://www.binance.com/en/trade/${full}?type=spot" target="_blank">${sym}<svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        </div></td>
+        <td class="${pctClass(c.vsAvg)}">${pctStr(c.vsAvg)}</td>
+        <td class="${pctClass(c.volChange)}">${pctStr(c.volChange)}</td>
+        <td class="${pctClass(c.change24h)}">${pctStr(c.change24h)}</td>
+        <td class="${pctClass(c.change7d)}">${pctStr(c.change7d)}</td>
+        <td class="${pctClass(c.change30d)}">${pctStr(c.change30d)}</td>
+        <td style="font-weight:600">${fmtPrice(c.price)}</td>
+        <td>${fmtPrice(c.avgPrice)}</td>
+        <td>${fmtPrice(c.avgHigh)}</td>
+        <td>${fmtPrice(c.avgLow)}</td>
+        <td>${fmtVol(c.volume24h)}</td>
+        <td>${profHTML}</td>
+      </tr>
+      <tr class="expand-row" style="display:${isOpen ? "table-row" : "none"}" id="exp-${sym}">
+        <td colspan="12"><div class="expand-inner">
+          <h4>Position — ${sym} <span style="font-size:10px;color:var(--dim);margin-left:6px">(${posType.toUpperCase()})</span></h4>
+          <div class="pos-grid">
+            <div class="pos-field"><label>Entry price ($)</label><input type="number" id="fp-${sym}" value="${pos?.entryPrice || c.price}" step="any" oninput="calcAmtFromUsdt('${sym}')" /></div>
+            <div class="pos-field"><label>USDT amount</label><input type="number" id="fu-${sym}" value="${pos ? (pos.coins * pos.entryPrice).toFixed(2) : ""}" placeholder="Optional" oninput="calcAmtFromUsdt('${sym}')" step="any" /></div>
+            <div class="pos-field"><label>Coin amount</label><input type="number" id="fa-${sym}" value="${pos?.coins || ""}" placeholder="e.g. 1.5" step="any" /></div>
+            <div class="pos-field"><label>Current value</label><input type="text" readonly value="${pos ? fmtPrice(pos.coins * c.price) : "—"}" style="color:var(--dim);cursor:default" /></div>
+            <div class="pos-field"><label>Direction</label><select id="ptype-${sym}" onchange="updatePositionType('${sym}',this.value)"><option value="long" ${posType === "long" ? "selected" : ""}>LONG</option><option value="short" ${posType === "short" ? "selected" : ""}>SHORT</option></select></div>
+          </div>
+          <div class="pos-msg" id="pm-${sym}">${pos ? `<span class="${prof.profit >= 0 ? "pos" : "neg"}">P&L: ${prof.profit >= 0 ? "+" : ""}$${prof.profit.toFixed(2)} (${pctStr(prof.pct)})</span>` : "Enter amounts above and click Save."}</div>
+          <div class="pos-actions">
+            <button class="btn btn-green" onclick="savePosition('${sym}',event)">💰 Save</button>
+            <button class="btn btn-red" onclick="sellPosition('${sym}',event)">📤 Close</button>
+            <button class="btn" onclick="event.stopPropagation();openSym=null;render()">✕ Hide</button>
+            <button class="btn btn-red" style="background:#c93c0d;border-color:#c93c0d" onclick="deletePosition('${sym}',event)">🗑 Delete</button>
+          </div>
+        </div></td>
+      </tr>`;
           })
           .join("");
         applyColVis();
         updateAlertDot();
+      }
+
+      function updatePositionType(sym, type) {
+        if (!positions[sym])
+          positions[sym] = { coins: 0, entryPrice: 0, type: "long" };
+        positions[sym].type = type;
+        save();
+        render();
       }
 
       function toggleRow(sym) {
@@ -1869,12 +1895,8 @@
         if (e.key === "Escape") closeAll();
       });
 
-      /* === DIP SCANNER === */
+      /* === SCANNER (multi-strategy with notifications) === */
       function runScanner() {
-        const minDrop = parseFloat(document.getElementById("scanDrop").value);
-        const minVol = parseFloat(document.getElementById("scanVol").value);
-        const minVsAvg = parseFloat(document.getElementById("scanVsAvg").value);
-        const sortKey = document.getElementById("scanSort").value;
         const el = document.getElementById("scanResults");
         const all = Object.values(coinData);
         if (!all.length) {
@@ -1888,60 +1910,95 @@
           if (c.volChange === undefined) c.volChange = 0;
           if (c.vsAvg === undefined) c.vsAvg = 0;
         });
-        const passedDrop = all.filter((c) => c.change24h <= minDrop).length;
-        const passedVol = all.filter((c) => c.volChange >= minVol).length;
-        const passedVsAvg = all.filter((c) => c.vsAvg <= minVsAvg).length;
-        const hits = all.filter(
-          (c) =>
-            c.change24h <= minDrop &&
-            c.volChange >= minVol &&
-            c.vsAvg <= minVsAvg,
-        );
-        hits.forEach((c) => {
-          c._score =
-            Math.abs(c.change24h) * 0.4 +
-            (c.volChange / 100) * 0.3 +
-            Math.abs(c.vsAvg) * 0.3;
+
+        const coinScores = new Map();
+        all.forEach((c) => {
+          let best = null;
+          for (const strat of SCAN_STRATEGIES) {
+            let match = true;
+            if (strat.drop < 0) {
+              if (!(c.change24h <= strat.drop)) match = false;
+            } else {
+              if (!(c.change24h >= strat.drop)) match = false;
+            }
+            if (!(c.volChange >= strat.vol)) match = false;
+            if (strat.vsAvg < 0) {
+              if (!(c.vsAvg <= strat.vsAvg)) match = false;
+            } else {
+              if (!(c.vsAvg >= strat.vsAvg)) match = false;
+            }
+            if (match) {
+              const score =
+                Math.abs(c.change24h) * 0.4 +
+                (c.volChange / 100) * 0.3 +
+                Math.abs(c.vsAvg) * 0.3;
+              if (!best || score > best.score)
+                best = {
+                  coin: c,
+                  score,
+                  strategyName: strat.name,
+                  tag: strat.tag,
+                };
+            }
+          }
+          if (best) coinScores.set(c.sym, best);
         });
-        hits.sort((a, b) =>
-          sortKey === "drop"
-            ? a.change24h - b.change24h
-            : sortKey === "vol"
-              ? b.volChange - a.volChange
-              : sortKey === "vsavg"
-                ? a.vsAvg - b.vsAvg
-                : b._score - a._score,
+
+        const hits = Array.from(coinScores.values()).sort(
+          (a, b) => b.score - a.score,
         );
+
+        if (notifEnabled && Notification.permission === "granted") {
+          const newSyms = hits.filter(
+            (h) =>
+              !lastScanHits.some(
+                (l) => l.sym === h.coin.sym && l.tag === h.tag,
+              ),
+          );
+          if (newSyms.length > 0) {
+            const names = newSyms
+              .map((h) => h.coin.sym)
+              .slice(0, 5)
+              .join(", ");
+            new Notification(
+              `Scanner found ${newSyms.length} new opportunities`,
+              { body: names + (newSyms.length > 5 ? " and more" : "") },
+            );
+          }
+        }
+        lastScanHits = hits.map((h) => ({ sym: h.coin.sym, tag: h.tag }));
+        save();
+
         document.getElementById("scanDot").style.display = hits.length
           ? "block"
           : "none";
-        const diagHTML = `<div class="diag-box"><strong>Diagnostics</strong> (${all.length} coins)<br>Drop ≤ ${minDrop}%: <span style="color:#539bf5">${passedDrop}</span> | Vol ≥ +${minVol}%: <span style="color:#539bf5">${passedVol}</span> | vs Avg ≤ ${minVsAvg}%: <span style="color:#539bf5">${passedVsAvg}</span></div>`;
         if (!hits.length) {
           el.innerHTML =
-            diagHTML +
-            '<div style="text-align:center;padding:14px;color:var(--dim);font-size:12px">No coins match all 3 filters.<br><small>Try loosening thresholds.</small></div>';
+            '<div style="text-align:center;padding:14px;color:var(--dim);font-size:12px">No coins match any strategy.<br><small>Try adding more coins or wait for market moves.</small></div>';
           return;
         }
+
         el.innerHTML =
-          diagHTML +
-          `<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${hits.length} coin${hits.length > 1 ? "s" : ""} found</div>` +
+          `<div style="font-size:11px;color:var(--dim);margin-bottom:8px">${hits.length} opportunities found</div>` +
           hits
-            .map((c) => {
+            .map((h) => {
+              const c = h.coin;
               const scoreColor =
-                c._score > 15
-                  ? "#da3633"
-                  : c._score > 8
-                    ? "#e3b341"
-                    : "#26a641";
+                h.score > 15 ? "#da3633" : h.score > 8 ? "#e3b341" : "#26a641";
+              const tagClass = h.tag === "LONG" ? "tag-long" : "tag-short";
+              const binanceUrl = `https://www.binance.com/en/trade/${c.fullSym}?type=spot`;
               return `<div class="scan-card">
         <div class="sc-header">
-          <span class="sc-sym">${c.sym}</span>
-          <span class="sc-score" style="color:${scoreColor}">Score ${c._score.toFixed(1)}</span>
+          <a class="sc-sym" href="${binanceUrl}" target="_blank" onclick="event.stopPropagation()">${c.sym}</a>
+          <span style="display:flex;gap:4px;align-items:center">
+            <span class="suggestion-tag ${tagClass}">${h.strategyName}</span>
+            <span class="sc-score" style="color:${scoreColor}">Score ${h.score.toFixed(1)}</span>
+          </span>
         </div>
         <div class="sc-grid">
-          <div><div style="color:var(--dim)">24h Drop</div><div class="sc-val neg">${pctStr(c.change24h)}</div></div>
+          <div><div style="color:var(--dim)">24h</div><div class="sc-val ${c.change24h < 0 ? "neg" : "pos"}">${pctStr(c.change24h)}</div></div>
           <div><div style="color:var(--dim)">Vol Spike</div><div class="sc-val" style="color:#e3b341">+${c.volChange.toFixed(0)}%</div></div>
-          <div><div style="color:var(--dim)">vs Avg</div><div class="sc-val neg">${pctStr(c.vsAvg)}</div></div>
+          <div><div style="color:var(--dim)">vs Avg</div><div class="sc-val ${c.vsAvg < 0 ? "neg" : "pos"}">${pctStr(c.vsAvg)}</div></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">
           <span style="font-size:11px;color:var(--dim)">${fmtPrice(c.price)}</span>
@@ -1962,7 +2019,7 @@
         });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "cryptotrack_backup.json";
+        a.download = "tracker_backup.json";
         a.click();
       }
 
